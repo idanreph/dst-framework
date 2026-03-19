@@ -1,0 +1,13 @@
+=== DST Scanner Results ===
+
+File: demo/bad-code-test.js
+
+Signals detected:
+  κ (masking)     : HIGH   — 1 silent catch block found
+  σ (stress loops): HIGH   — circular call chain detected (processAuth → validateSession → processAuth)
+  ρ (healing)     : LOW    — 0 retry/fallback patterns found
+  Θ (capacity)    : LOW    — 1 overloaded function (handleRequest)
+
+DST Score: 0.18 / 1.00
+
+Verdict: Pre-collapse state. Immediate refactor recommended.
