@@ -9,7 +9,8 @@ For runnable demos, see [/demo](../../demo/).
 
 | File | Description |
 |------|-------------|
-| `express-codebase.md` | DST analysis of a Node.js/Express codebase |
+| `express-codebase.md` | Quick summary + link to full case study |
+| `express-v4-case-study.md` | ⭐ expressjs/express · 65k stars · V3 vs V4 comparison · Residual regime (Θ 0/100) · κ_a / κ_c / three action lists |
 | `real-world.md` | 🔥 Real-world repo analyzed — before/after DST |
 | `web-llm-chat-case-study.md` | mlc-ai/web-llm-chat · Residual regime (Θ 0/100) · observability gap 100 pts |
 | `facebook-react-case-study.md` | ⭐ facebook/react · 228k stars · Elastic regime (Θ 100/100) · inverted observability gap · lane system κ_c analysis |
