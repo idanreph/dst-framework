@@ -1,0 +1,21 @@
+{
+  "score": 100,
+  "regime": "Elastic",
+  "history": [
+    {
+      "score": 100,
+      "regime": "Elastic",
+      "ts": "2026-03-21T16:05:45.904Z"
+    },
+    {
+      "score": 100,
+      "regime": "Elastic",
+      "ts": "2026-03-21T16:06:25.150Z"
+    },
+    {
+      "score": 100,
+      "regime": "Elastic",
+      "ts": "2026-03-21T16:07:06.007Z"
+    }
+  ]
+}
