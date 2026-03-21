@@ -269,8 +269,7 @@ Payback:        1.6 months
 
 ---
 
-→ [Express.js case study](express-codebase.md) — Plastic regime (52/100)
-→ [DST Code Foundations](../code/dst-code-foundations.md) — how to write code differently
+
 → [DST Theory](https://idanreph.github.io/dst--theory-/) — the framework
 → [SSRN 6434119](https://ssrn.com/abstract=6434119) — formal paper
 
