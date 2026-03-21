@@ -14,6 +14,7 @@ For runnable demos, see [/demo](../../demo/).
 | `real-world.md` | 🔥 Real-world repo analyzed — before/after DST |
 | `web-llm-chat-case-study.md` | mlc-ai/web-llm-chat · Residual regime (Θ 0/100) · observability gap 100 pts |
 | `facebook-react-case-study.md` | ⭐ facebook/react · 228k stars · Elastic regime (Θ 100/100) · inverted observability gap · lane system κ_c analysis |
+| `nextjs-case-study.md` | ⭐ vercel/next.js · 130k stars · **Plastic regime (Θ 65/100)** · 15 pt observability gap · dual-router κ analysis · Vercel vs React vs Express comparison |
 
 ## How to read these
 
