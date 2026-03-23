@@ -1,6 +1,6 @@
 # .github/workflows/dst-diagnostic.yml
 #
-# DST Diagnostic v4.5 — runs on every PR and push
+# DST Diagnostic v4.5-final — runs on every PR and push
 # Posts a structural health report as a PR comment
 #
 # DST Framework: ρ heals · κ hides · σ kills
@@ -10,8 +10,6 @@
 # 1. Copy tools/dst-scanner.js and tools/dst-action.js to your repo root
 # 2. Copy this file to .github/workflows/dst-diagnostic.yml
 # 3. Push. DST runs on the next PR automatically.
-#    (The 'run: node dst-action.js' step expects the files at your repo root
-#     after you've completed step 1 above.)
 #
 # ── WHAT YOU GET ON EVERY PR ─────────────────────────────────────────────────
 #
@@ -41,6 +39,8 @@
 #                           hyperscale → σ × 4.0
 #   DST_FAIL_SCORE      — fail CI if Θ below this           (default: 0 = never)
 #   DST_FAIL_RISK       — fail CI if risk score above this  (default: 0 = never)
+#   DST_SELF_SCAN       — 1 = scanner diagnoses itself, posts own Θ in PR footer
+#   DST_JSON_OUTPUT     — 1 = print structuredReport as JSON to console (for pipelines)
 #   DST_HOURS_RETRY     — ROI multiplier: retry hours       (default: 4)
 #   DST_HOURS_ERROR     — ROI multiplier: error hours       (default: 6)
 #   DST_HOURS_GOD       — ROI multiplier: god fn hours      (default: 8)
@@ -87,7 +87,7 @@ permissions:
 
 jobs:
   dst-scan:
-    name: "DST Structural Analysis v4.5"
+    name: "DST Structural Analysis v4.5-final"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -142,6 +142,9 @@ jobs:
           DST_HOURS_GOD:      ${{ vars.DST_HOURS_GOD        || '8' }}
           DST_HOURS_STATE:    ${{ vars.DST_HOURS_STATE      || '3' }}
           DST_HOURS_NPLUS:    ${{ vars.DST_HOURS_NPLUS      || '5' }}
+          # V4.5-final: self-diagnosis + structured output
+          DST_SELF_SCAN:      ${{ vars.DST_SELF_SCAN         || '' }}
+          DST_JSON_OUTPUT:    ${{ vars.DST_JSON_OUTPUT       || '' }}
         run: node dst-action.js
 
       - name: Save DST trend artifact
