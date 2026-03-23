@@ -1,48 +1,72 @@
 # .github/workflows/dst-diagnostic.yml
 #
-# DST Diagnostic v4 — runs on every PR and push
+# DST Diagnostic v4.5 — runs on every PR and push
 # Posts a structural health report as a PR comment
 #
 # DST Framework: ρ heals · κ hides · σ kills
 # SSRN 6434119 · Idan Rephiah · 2026
 #
 # ── QUICK START ──────────────────────────────────────────────────────────────
-# 1. Copy dst-scanner.js and dst-action.js to your repo root
+# 1. Copy tools/dst-scanner.js and tools/dst-action.js to your repo root
 # 2. Copy this file to .github/workflows/dst-diagnostic.yml
 # 3. Push. DST runs on the next PR automatically.
+#    (The 'run: node dst-action.js' step expects the files at your repo root
+#     after you've completed step 1 above.)
 #
 # ── WHAT YOU GET ON EVERY PR ─────────────────────────────────────────────────
 #
 #   Θ (real remaining capacity)      — the actual structural health
 #   Apparent health                  — what your metrics show
 #   Observability gap                — how much your metrics are lying
-#   dΘ/dt (trajectory)               — are you improving or declining?
+#   dΘ/dt (trajectory)              — are you improving or declining?
 #   Regime prediction                — sprints until next regime transition
 #   Rewrite signal                   — Proposition 5: when local fixes stop working
 #   Three action lists               — Fix κ_a / Mitigate κ_c / Accept κ_i
+#   κ_i expiration tracking          — @dst-kappa-i annotations enforced by CI
+#   σ scaling by environment         — hyperscale N+1 weighted 4x vs small
+#   ΔΘ thermodynamic gate            — blocks PRs that make Residual systems worse
 #   Annual cost of κ                 — dollar cost of structural debt
 #
 # ── OPTIONAL CONFIG ──────────────────────────────────────────────────────────
 # Set these in: repo → Settings → Secrets and variables → Actions → Variables
 #
-#   DST_TEAM_SIZE       — number of engineers           (default: 10)
-#   DST_ENGINEER_COST   — annual cost per engineer USD  (default: 150000)
-#   DST_SCAN_DIR        — directory to scan             (default: . = whole repo)
-#   DST_FAIL_SCORE      — fail CI if Θ below this       (default: 0 = never fail)
-#   DST_FAIL_RISK       — fail CI if risk score above   (default: 0 = never fail)
-#   DST_DATA_SCALE      — small/medium/large/hyperscale (default: medium)
-#   DST_HOURS_RETRY     — ROI multiplier: retry hours   (default: 4)
-#   DST_HOURS_ERROR     — ROI multiplier: error hours   (default: 6)
-#   DST_HOURS_GOD       — ROI multiplier: god fn hours  (default: 8)
-#   DST_HOURS_STATE     — ROI multiplier: state hours   (default: 3)
-#   DST_HOURS_NPLUS     — ROI multiplier: N+1 hours     (default: 5)
+#   DST_TEAM_SIZE       — number of engineers               (default: 10)
+#   DST_ENGINEER_COST   — annual cost per engineer USD      (default: 150000)
+#   DST_SCAN_DIR        — directory to scan                 (default: . = whole repo)
+#   DST_DATA_SCALE      — small/medium/large/hyperscale     (default: medium)
+#                         Controls sigma amplifier weighting:
+#                           small      → σ × 0.5
+#                           medium     → σ × 1.0  (default)
+#                           large      → σ × 2.0
+#                           hyperscale → σ × 4.0
+#   DST_FAIL_SCORE      — fail CI if Θ below this           (default: 0 = never)
+#   DST_FAIL_RISK       — fail CI if risk score above this  (default: 0 = never)
+#   DST_HOURS_RETRY     — ROI multiplier: retry hours       (default: 4)
+#   DST_HOURS_ERROR     — ROI multiplier: error hours       (default: 6)
+#   DST_HOURS_GOD       — ROI multiplier: god fn hours      (default: 8)
+#   DST_HOURS_STATE     — ROI multiplier: state hours       (default: 3)
+#   DST_HOURS_NPLUS     — ROI multiplier: N+1 hours         (default: 5)
+#
+# ── V4.5 GATES ───────────────────────────────────────────────────────────────
+#
+#   ΔΘ gate (automatic, always on):
+#     Blocks PRs with negative thermodynamic impact on Residual systems.
+#     Fix: add at least one ρ healing pattern to the PR.
+#
+#   κ_i expiration (automatic, always on):
+#     @dst-kappa-i: expires YYYY-MM-DD annotations enforced by CI.
+#     Expired → reclassified as κ_a with -15pt penalty + warning.
+#
+#   AST engine (automatic when @babel/parser installed):
+#     More accurate N+1 and silent catch detection.
+#     Falls back to regex if babel not available — zero regression risk.
 #
 # ── REGIME REFERENCE ─────────────────────────────────────────────────────────
 #
-#   Elastic     (Θ 75-100)  Healthy. Features are fast to add.
-#   Plastic     (Θ 50-74)   Working via masking. Capacity declining.
-#   Late Plastic (Θ 25-49)  Significant κ. Each feature costs more.
-#   Residual    (Θ 0-24)    Delayed failure. Fix before adding anything.
+#   Elastic      (Θ 75-100)  Healthy. Features are fast to add.
+#   Plastic      (Θ 50-74)   Working via masking. Capacity declining.
+#   Late Plastic (Θ 25-49)   Significant κ. Each feature costs more.
+#   Residual     (Θ 0-24)    Delayed failure. Fix before adding anything.
 #
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -54,16 +78,16 @@ on:
     types: [ opened, synchronize, reopened ]
   push:
     branches: [ main, master ]
-  workflow_dispatch:  # allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
 
 permissions:
-  contents: write     # needed to save trend artifact
+  contents: write
   pull-requests: write
   issues: write
 
 jobs:
   dst-scan:
-    name: "DST Structural Analysis"
+    name: "DST Structural Analysis v4.5"
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -71,17 +95,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # full history for trend tracking
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # Download previous trend artifact for dΘ/dt calculation
+      # Optional: install Babel for AST engine (more accurate detection)
+      # Remove if you want regex-only mode (still works fine without it)
+      - name: Install AST engine (optional)
+        run: |
+          if [ -f "package.json" ]; then
+            npm install --no-save @babel/parser @babel/traverse 2>/dev/null || true
+          else
+            npm init -y --quiet 2>/dev/null
+            npm install --no-save @babel/parser @babel/traverse 2>/dev/null || true
+          fi
+        continue-on-error: true
+
+      # Download previous trend for dΘ/dt calculation
       - name: Download previous DST trend
         uses: dawidd6/action-download-artifact@v3
-        continue-on-error: true  # first run has no previous artifact
+        continue-on-error: true
         with:
           name: dst-trend
           path: .
@@ -94,23 +130,20 @@ jobs:
           PR_NUMBER:          ${{ github.event.pull_request.number }}
           BASE_SHA:           ${{ github.event.pull_request.base.sha }}
           HEAD_SHA:           ${{ github.event.pull_request.head.sha }}
-          # Team context
           DST_SCAN_DIR:       ${{ vars.DST_SCAN_DIR        || '.' }}
           DST_TEAM_SIZE:      ${{ vars.DST_TEAM_SIZE        || '10' }}
           DST_ENGINEER_COST:  ${{ vars.DST_ENGINEER_COST    || '150000' }}
           DST_ARTIFACT_DIR:   '.'
-          # Governance
+          DST_DATA_SCALE:     ${{ vars.DST_DATA_SCALE       || 'medium' }}
           DST_FAIL_SCORE:     ${{ vars.DST_FAIL_SCORE       || '0' }}
           DST_FAIL_RISK:      ${{ vars.DST_FAIL_RISK        || '0' }}
-          # ROI multipliers (optional — override default hours per finding)
           DST_HOURS_RETRY:    ${{ vars.DST_HOURS_RETRY      || '4' }}
           DST_HOURS_ERROR:    ${{ vars.DST_HOURS_ERROR      || '6' }}
           DST_HOURS_GOD:      ${{ vars.DST_HOURS_GOD        || '8' }}
           DST_HOURS_STATE:    ${{ vars.DST_HOURS_STATE      || '3' }}
           DST_HOURS_NPLUS:    ${{ vars.DST_HOURS_NPLUS      || '5' }}
-        run: node tools/dst-action.js
+        run: node dst-action.js
 
-      # Save trend data for next run (enables dΘ/dt calculation)
       - name: Save DST trend artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -120,12 +153,10 @@ jobs:
           retention-days: 90
           overwrite: true
 
-      # Save full report for audit trail
       - name: Upload DST report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dst-report-${{ github.run_number }}
-          path: |
-            .dst-trend.json
+          path: .dst-trend.json
           retention-days: 30
