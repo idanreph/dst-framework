@@ -1,4 +1,4 @@
-// dst-scanner.js — v4.5
+// dst-scanner.js — v4.5-final
 // DST Structural Intelligence Engine
 //
 // v4.5 additions:
@@ -7,10 +7,13 @@
 //     Expired κ_i → -15 penalty, reclassified to κ_a, listed in Fix column
 //   - DST_DATA_SCALE: σ amplifiers scaled by environment mass
 //     small=×0.5 · medium=×1.0 · large=×2.0 · hyperscale=×4.0
-//   - AST parallel engine (Babel): two proof-of-concept rules alongside regex
+//   - AST parallel engine (Babel): AST is now PRIMARY when available
 //     Rule 1 σ: N+1 — await inside loop body (AST-accurate)
 //     Rule 2 κ_a: silent catch — CatchClause with no throw (AST-accurate)
-//     AST runs when @babel/parser available; regex is always fallback
+//     Regex runs as fallback only when @babel/parser unavailable
+//   - detectJS split into 6 focused sub-scanners (κ_a god function eliminated)
+//   - structuredReport: clean JSON object in runFullScan return value
+//   - DST_SELF_SCAN=1: scanner diagnoses itself, posts own Θ in PR comment
 //
 // v4 additions (math-grounded):
 //   - Θ naming, κ classification, observability gap, σ_eff, κ saturation
@@ -85,7 +88,7 @@ const HOURS = {
 const JS = {
   retryLoop:     /while\s*\(\s*retries?\s*[<>]|for\s*\(\s*\w+\s*=\s*0[^;]*;\s*\w+\s*<\s*\d/i,
   retryVar:      /\bretry(?:Count|Limit|Times|Attempts)\b|\bmaxRetries\b/i,
-  catchOpen:     /\}\s*catch\s*\(/,
+  catchOpen:     /(?:\}\s*)?catch\s*\(/,
   realHandler:   /\bthrow\b|\breject\b|\bemit\s*\(|\bstatus\s*\(\s*5|\bsendStatus\s*\(\s*5|\bcapture\b|\bnotify\b/i,
   silentCatch:   /console\s*\.\s*(?:log|warn)\s*\(|\/\/\s*(?:silent|ignore|swallow)/i,
   todoLine:      /^\s*\/\/\s*(?:TODO|FIXME|HACK|XXX|TEMP|WORKAROUND)\b/i,
@@ -169,15 +172,27 @@ const FIX = {
 };
 
 // ── RISK ENGINE ───────────────────────────────────────────────────────────
-function calculateRiskScore(kappaCount, sigmaCount, secFindings) {
+function calculateRiskScore(kappaCount, sigmaCount, secFindings, theta = 50) {
+  // Raw risk from pattern counts
   const raw = (sigmaCount * 15) + (secFindings * 20) + (kappaCount * 3);
-  const score = Math.min(100, Math.round(raw));
+
+  // v4.5: Regime multiplier — risk is not context-free.
+  // An Elastic system (Θ=100) with many findings has high ρ absorbing the load.
+  // A Residual system (Θ=10) with the same findings is in delayed failure.
+  // The same raw count means something structurally different per regime.
+  const regimeMultiplier =
+    theta >= 75 ? 0.15 :   // Elastic:      ρ dominant, risk contained
+    theta >= 50 ? 0.55 :   // Plastic:      κ active, risk real but managed
+    theta >= 25 ? 0.85 :   // Late Plastic: κ near exhaustion, risk elevated
+                 1.00;     // Residual:     full raw risk, no dampening
+
+  const score = Math.min(100, Math.round(raw * regimeMultiplier));
   let level, desc;
   if (score >= 70) { level = 'CRITICAL'; desc = 'Immediate action required — structural collapse and breach risk are both elevated'; }
   else if (score >= 45) { level = 'HIGH';     desc = 'Significant structural and security exposure — prioritize before next feature sprint'; }
   else if (score >= 20) { level = 'MEDIUM';   desc = 'Manageable risk — address top findings within 2 sprints'; }
   else                  { level = 'LOW';      desc = 'Risk is contained — maintain current practices'; }
-  return { score, level, desc };
+  return { score, level, desc, regimeMultiplier };
 }
 
 // ── REGIME WARNING ────────────────────────────────────────────────────────
@@ -363,125 +378,138 @@ function detectJSWithAST(content, filePath) {
 }
 
 // ── JS DETECTOR ───────────────────────────────────────────────────────────
-function detectJS(content, filePath) {
-  const lines    = content.split('\n');
+// ── FOCUSED JS SUB-SCANNERS (split from god-function detectJS) ────────────
+// Each scanner has one responsibility. Pure functions. Testable in isolation.
+
+function scanSilentCatches(lines) {
   const findings = [];
-  const rhoFound = [];
-  const isTS     = filePath.endsWith('.ts') || filePath.endsWith('.tsx');
-
-  if (lines.length > MAX_FILE_LINES) {
-    findings.push(make('large_file', 1, `${lines.length} lines`, 'File too large — partial scan'));
-    return { findings, rhoFound };
-  }
-
-  let maxDepth = 0, curDepth = 0, deepStart = -1;
-  let commentedRun = 0;
   let inCatch = false, catchDepth = 0, catchLines = [], catchStart = 0;
-
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const t    = line.trim();
-
     const opens  = (line.match(/\{/g)||[]).length;
     const closes = (line.match(/\}/g)||[]).length;
-    curDepth += opens - closes;
-    if (curDepth > maxDepth) {
-      maxDepth = curDepth;
-      if (maxDepth >= 5 && deepStart < 0) deepStart = i + 1;
-    }
-
     if (JS.catchOpen.test(line)) {
-      inCatch = true; catchDepth = 1; catchLines = [line]; catchStart = i + 1;
+      // Inline catch on one line
+      const inlineMatch = line.match(/catch\s*\([^)]*\)\s*\{([^}]*)\}/);
+      if (inlineMatch) {
+        const inlineBody = inlineMatch[1];
+        const hasReal  = JS.realHandler.test(inlineBody);
+        const isSilent = !hasReal && (JS.silentCatch.test(inlineBody) || inlineBody.trim() === '' || !inlineBody.trim().replace(/\/\/[^\n]*/g,'').trim());
+        if (isSilent) findings.push(make('error_swallowing', i+1, line.trim().substring(0,70), 'Error caught but not meaningfully handled — disappears here'));
+      } else {
+        inCatch = true; catchDepth = 1; catchLines = [line]; catchStart = i + 1;
+      }
     } else if (inCatch) {
       catchLines.push(line);
       catchDepth += opens - closes;
       if (catchDepth <= 0) {
         const body = catchLines.join('\n');
         const hasReal  = JS.realHandler.test(body);
-        const isSilent = !hasReal && (JS.silentCatch.test(body) || catchLines.length <= 2);
-        if (isSilent) findings.push(make('error_swallowing', catchStart,
-          catchLines[0]?.trim().substring(0,70)||'catch',
-          'Error caught but not meaningfully handled — disappears here'));
+        const innerLines = catchLines.slice(1, -1);
+        const hasActualCode = innerLines.some(l => {
+          const s = l.trim();
+          return s && !s.startsWith('//') && !s.startsWith('/*') && !s.startsWith('*') && s !== '*/';
+        });
+        if (!hasReal && (JS.silentCatch.test(body) || catchLines.length <= 2 || !hasActualCode))
+          findings.push(make('error_swallowing', catchStart, catchLines[0]?.trim().substring(0,70)||'catch', 'Error caught but not meaningfully handled — disappears here'));
         inCatch = false;
       }
     }
+  }
+  return findings;
+}
 
-    if (JS.regexLiteral.test(t)) continue;
-
+function scanRetryLoops(lines) {
+  const findings = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const t = line.trim();
     if (JS.retryLoop.test(line) || JS.retryVar.test(line)) {
       const ctx = lines.slice(Math.max(0,i-3), Math.min(lines.length,i+12)).join('\n');
       const legit = JS.isCircuitBrk.test(ctx) && /\bthrow\b/.test(ctx);
       if (!legit && (/catch/.test(ctx) || /\bretry\b|\battempt\b/i.test(ctx))) {
-        findings.push(make('retry_loop', i+1, t.substring(0,70),
-          'Retry loop masks an unstable dependency instead of fixing it'));
+        findings.push(make('retry_loop', i+1, t.substring(0,70), 'Retry loop masks an unstable dependency instead of fixing it'));
         i += 3;
       }
     }
+  }
+  return findings;
+}
 
-    if (JS.todoLine.test(t)) findings.push(make('todo_comment', i+1, t.substring(0,70),
-      'Documented technical debt — κ acknowledged but not resolved'));
-
+function scanImplicitMutations(lines, isTS) {
+  const findings = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const t = line.trim();
+    if (JS.regexLiteral.test(t)) continue;
+    if (JS.todoLine.test(t)) findings.push(make('todo_comment', i+1, t.substring(0,70), 'Documented technical debt — κ acknowledged but not resolved'));
     if (JS.tripleOr.test(line) && (line.match(/\|\|/g)||[]).length >= 2)
-      findings.push(make('triple_normalizer', i+1, t.substring(0,70),
-        'Multi-format normalizer masks inconsistent upstream data shape'));
-
-    if (JS.commentedCode.test(t)) {
-      commentedRun++;
-    } else {
-      if (commentedRun >= 3) findings.push(make('commented_code', i - commentedRun + 1,
-        `${commentedRun} lines of commented-out code`,
-        'Commented-out code preserved "just in case" — κ through fear of deletion'));
-      commentedRun = 0;
-    }
-
+      findings.push(make('triple_normalizer', i+1, t.substring(0,70), 'Multi-format normalizer masks inconsistent upstream data shape'));
     if (!JS.mutExclude.test(t) && JS.mutAssign.test(t) && !/===|!==|>=|<=|=>/.test(t)) {
       const m = t.match(/\b([a-z]\w{3,})\s*\.\s*([a-z]\w{3,})\s*=[^=]/i);
       if (m && !/^(?:module|exports|this|self|window|global|process|console|Math|JSON|Object|Array|Promise|isComposing|ref)$/i.test(m[1]) && !/\.current\s*=/.test(t))
-        findings.push(make('implicit_state', i+1, t.substring(0,70),
-          'Implicit state mutation — side effect callers cannot see'));
+        findings.push(make('implicit_state', i+1, t.substring(0,70), 'Implicit state mutation — side effect callers cannot see'));
     }
-
     if (isTS && JS.anyType.test(line) && !/^\s*\/\//.test(t))
-      findings.push(make('any_type', i+1, t.substring(0,70),
-        '`any` type disables type checking — κ hiding a type mismatch'));
+      findings.push(make('any_type', i+1, t.substring(0,70), '`any` type disables type checking — κ hiding a type mismatch'));
+  }
+  return findings;
+}
 
+function scanNPlusOne(lines, content) {
+  const findings = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const t = line.trim();
     if (JS.loopHead.test(line)) {
       const ahead = lines.slice(i+1, i+8).join('\n');
       if (JS.dbCall.test(ahead)) {
         const ctx = lines.slice(Math.max(0,i-5),i).join('\n');
         if (!JS.isBatched.test(ctx))
-          findings.push(make('n_plus_one', i+1, t.substring(0,70),
-            'DB/API call inside loop — stress amplifies with data size'));
+          findings.push(make('n_plus_one', i+1, t.substring(0,70), 'DB/API call inside loop — stress amplifies with data size'));
       }
     }
-
     if (JS.pushOrAppend.test(line)) {
       const m = line.match(/\b(\w+)\s*\.\s*push|\b(\w+)\s*\+=/);
       if (m) {
         const v = m[1]||m[2];
         const rx = new RegExp(`^(?:const|let|var)\\s+${v}\\s*=\\s*(?:\\[|\\{|new)`,'m');
         if (rx.test(content.substring(0,2000)))
-          findings.push(make('unbounded_growth', i+1, t.substring(0,70),
-            `"${v}" grows at module scope without bound — memory leak pattern`));
+          findings.push(make('unbounded_growth', i+1, t.substring(0,70), `"${v}" grows at module scope without bound — memory leak pattern`));
       }
     }
+  }
+  return findings;
+}
 
-    // ρ signals
-    if (JS.throwNew.test(line))    rhoFound.push({ type:'explicit_error' });
-    if (JS.freezeConst.test(line)) rhoFound.push({ type:'immutable' });
-    if (JS.ifaceOrType.test(t))    rhoFound.push({ type:'typed_interface' });
+function scanCommentedCode(lines) {
+  const findings = [];
+  let commentedRun = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (JS.commentedCode.test(t)) {
+      commentedRun++;
+    } else {
+      if (commentedRun >= 3) findings.push(make('commented_code', i - commentedRun + 1, `${commentedRun} lines of commented-out code`, 'Commented-out code preserved "just in case" — κ through fear of deletion'));
+      commentedRun = 0;
+    }
+  }
+  return findings;
+}
 
-    // Security findings (score:0 — do NOT affect DST health score)
+function scanSecurity(lines) {
+  const findings = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const t = line.trim();
     if (/\breq\s*\.\s*body\b/.test(line)) {
       const ctx = lines.slice(Math.max(0,i-5), Math.min(lines.length,i+5)).join('\n');
       if (!/validate|sanitize|schema|joi|zod|yup|escape|strip/i.test(ctx))
-        findings.push(make('unvalidated_input', i+1, t.substring(0,70),
-          'req.body used without visible validation — review for injection risk'));
+        findings.push(make('unvalidated_input', i+1, t.substring(0,70), 'req.body used without visible validation — review for injection risk'));
     }
     if (/`[^`]*\$\{[^}]+\}[^`]*\b(?:SELECT|INSERT|UPDATE|DELETE|WHERE)\b/i.test(line) ||
         /\b(?:SELECT|INSERT|UPDATE|DELETE|WHERE)\b[^`"']{0,60}\+\s*\w/i.test(line))
-      findings.push(make('sql_concat', i+1, t.substring(0,70),
-        'SQL built with string concatenation — use parameterized queries'));
+      findings.push(make('sql_concat', i+1, t.substring(0,70), 'SQL built with string concatenation — use parameterized queries'));
     if (/(?:password|secret|api_?key|token|auth)\s*[:=]\s*['"][^'"]{8,}['"]/i.test(line) &&
         !/process\.env|config\.|getenv|os\.environ|FIX_MAP|fix:|fix,|message:|label:/i.test(line) &&
         !/^\s*[a-z_]+:\s*['"][^'"]*(?:environ|variable|rotate|sanitize)/i.test(t))
@@ -489,11 +517,24 @@ function detectJS(content, filePath) {
         t.replace(/['"][^'"]{3,}['"]/g,'"[REDACTED]"').substring(0,70),
         'Possible hardcoded secret — use environment variables'));
   }
+  return findings;
+}
 
-  if (maxDepth >= 5) findings.push(make('deep_nesting', deepStart||1,
-    `Nesting depth: ${maxDepth}`,
-    `Max nesting depth ${maxDepth} — each level is a hidden dependency`));
+function scanRhoSignals(lines) {
+  const rhoFound = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const t = line.trim();
+    if (JS.throwNew.test(line))    rhoFound.push({ type:'explicit_error' });
+    if (JS.freezeConst.test(line)) rhoFound.push({ type:'immutable' });
+    if (JS.ifaceOrType.test(t))    rhoFound.push({ type:'typed_interface' });
+  }
+  return rhoFound;
+}
 
+function scanFunctions(content, lines, existingFindings) {
+  const findings = [];
+  const rhoFound = [];
   const funcRx = /(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(([^)]*)\)\s*=>/g;
   let fm;
   while ((fm = funcRx.exec(content)) !== null) {
@@ -513,15 +554,56 @@ function detectJS(content, filePath) {
         `function ${name}(${params.slice(0,3).join(', ')}${params.length>3?', ...':''})`,
         `"${name}" ~${Math.round(est)} lines, ${params.length} params — high stress surface`));
     } else if (params.length <= 2 && est < 20) {
-      rhoFound.push({ type:'pure_function' });
+      const funcStartLine = content.substring(0, fm.index).split('\n').length;
+      const funcBodyText  = content.substring(fm.index, fm.index + sz);
+      const funcEndLine   = funcStartLine + funcBodyText.split('\n').length - 1;
+      const hasKappaInside = [...existingFindings, ...findings].some(f =>
+        (f.category === 'kappa' || f.category === 'sigma') &&
+        f.line >= funcStartLine && f.line <= funcEndLine
+      );
+      if (!hasKappaInside) rhoFound.push({ type:'pure_function' });
     }
   }
-
-  if (lines.length > 400) findings.push(make('large_file', 1,
-    `${lines.length} lines`,
-    `File has ${lines.length} lines — check for mixed responsibilities`));
-
   return { findings, rhoFound };
+}
+
+// ── detectJS: orchestrator (now lean — delegates to focused scanners) ─────
+function detectJS(content, filePath) {
+  const lines = content.split('\n');
+  const isTS  = filePath.endsWith('.ts') || filePath.endsWith('.tsx');
+
+  if (lines.length > MAX_FILE_LINES) {
+    return { findings: [make('large_file', 1, `${lines.length} lines`, 'File too large — partial scan')], rhoFound: [] };
+  }
+
+  // Run focused scanners — each has one responsibility
+  const catches   = scanSilentCatches(lines);
+  const retries   = scanRetryLoops(lines);
+  const mutations = scanImplicitMutations(lines, isTS);
+  const nplus     = scanNPlusOne(lines, content);
+  const commented = scanCommentedCode(lines);
+  const security  = scanSecurity(lines);
+  const rhoFound  = scanRhoSignals(lines);
+
+  // Nesting depth — needs full line scan (single pass)
+  let maxDepth = 0, curDepth = 0, deepStart = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const opens  = (lines[i].match(/\{/g)||[]).length;
+    const closes = (lines[i].match(/\}/g)||[]).length;
+    curDepth += opens - closes;
+    if (curDepth > maxDepth) { maxDepth = curDepth; if (maxDepth >= 5 && deepStart < 0) deepStart = i + 1; }
+  }
+
+  const allFindings = [...catches, ...retries, ...mutations, ...nplus, ...commented, ...security];
+  if (maxDepth >= 5) allFindings.push(make('deep_nesting', deepStart||1, `Nesting depth: ${maxDepth}`, `Max nesting depth ${maxDepth} — each level is a hidden dependency`));
+  if (lines.length > 400) allFindings.push(make('large_file', 1, `${lines.length} lines`, `File has ${lines.length} lines — check for mixed responsibilities`));
+
+  const { findings: funcFindings, rhoFound: funcRho } = scanFunctions(content, lines, allFindings);
+
+  return {
+    findings: [...allFindings, ...funcFindings],
+    rhoFound: [...rhoFound, ...funcRho],
+  };
 }
 
 // ── PYTHON DETECTOR ───────────────────────────────────────────────────────
@@ -715,32 +797,39 @@ function detectKappaI(content, filePath) {
 function detectPatterns(content, filePath) {
   const isPython = PY_EXTS.has(path.extname(filePath));
 
-  // Base detection (regex engine — always runs)
-  const base = isPython
-    ? detectPython(content, filePath)
-    : detectJS(content, filePath);
+  // V4.5-final: AST is PRIMARY when available.
+  // Regex runs as fallback only when @babel/parser is not installed.
+  // AST = structural truth. Regex = surface approximation.
+  const useAST = !isPython && !!babelParser;
 
-  // V4.5: κ_i expiration contract (all file types)
+  let base;
+  if (useAST) {
+    // AST primary path — regex is the fallback for anything AST misses
+    const astResult  = detectJSWithAST(content, filePath);
+    const regexResult = detectJS(content, filePath);
+    // Merge: keep all AST findings + any regex findings not already found by AST (±2 lines)
+    const astLines = new Set(astResult.findings.map(f => `${f.type}:${f.line}`));
+    const regexOnly = regexResult.findings.filter(f => {
+      for (let d = -2; d <= 2; d++) {
+        if (astLines.has(`${f.type}:${f.line + d}`)) return false;
+      }
+      return true;
+    });
+    base = {
+      findings: [...astResult.findings, ...regexOnly],
+      rhoFound: regexResult.rhoFound, // ρ signals still from regex (AST doesn't scan these yet)
+    };
+  } else {
+    base = isPython
+      ? detectPython(content, filePath)
+      : detectJS(content, filePath);
+  }
+
+  // κ_i expiration contract (all file types — always runs)
   const kappaIFindings = detectKappaI(content, filePath);
 
-  // V4.5: AST parallel engine (JS/TS only, when babel available)
-  const astFindings = (!isPython && babelParser)
-    ? detectJSWithAST(content, filePath)
-    : [];
-
-  // Merge: AST findings deduplicate regex findings by line proximity (±2 lines)
-  // AST result wins when both detect the same pattern on the same line.
-  const regexLines = new Set(base.findings.map(f => `${f.type}:${f.line}`));
-  const dedupedAST = astFindings.filter(f => {
-    // Keep AST finding if regex didn't find it within ±2 lines
-    for (let d = -2; d <= 2; d++) {
-      if (regexLines.has(`${f.type}:${f.line + d}`)) return false;
-    }
-    return true;
-  });
-
   return {
-    findings: [...base.findings, ...kappaIFindings, ...dedupedAST],
+    findings: [...base.findings, ...kappaIFindings],
     rhoFound: base.rhoFound,
   };
 }
@@ -880,7 +969,7 @@ function runFullScan(targetDir='.', options={}) {
 
   // V3 fields
   const regime  = classifyRegime(score);
-  const risk    = calculateRiskScore(kappaCount, sigmaCount, secCount);
+  const risk    = calculateRiskScore(kappaCount, sigmaCount, secCount, score); // v4.5: pass theta
   const warning = regimeWarning(regime.name);
   const healing = healingPriorities(allFindings);
   const roi     = calculateROI(allFindings, teamSize, engineerCost);
@@ -895,15 +984,67 @@ function runFullScan(targetDir='.', options={}) {
   const theta         = score; // Θ = real remaining capacity
   const dThetaDt      = calculateDThetaDt(theta, prevTrend);
   const obsGap        = calculateObservabilityGap(theta, allFindings);
-  const sigmaEff      = calculateSigmaEff(sigmaCount, kappaCount);
-  const kappaSat      = calculateKappaSaturation(kappaCount, Object.keys(scanResults).length, teamSize);
+  const sigmaEff      = calculateSigmaEff(sigmaCount, kappaCount, theta);      // v4.5: pass theta
+  const kappaSat      = calculateKappaSaturation(kappaCount, Object.keys(scanResults).length, teamSize, rhoCount, theta); // v4.5: pass rhoCount + theta
   const regimePred    = predictRegimeTransition(theta, dThetaDt);
   const rewriteSignal = detectRewriteSignal(theta, dThetaDt, worst);
   const actionLists   = buildActionLists(allFindings);
 
+  // ── V4.5-final: structuredReport — clean JSON for dashboards, APIs, SaaS ──
+  // Teams can pipe this directly into monitoring systems, the Compass, or NFT mint
+  const structuredReport = {
+    version:    '4.5-final',
+    scannedAt:  new Date().toISOString(),
+    // Core capacity
+    theta,
+    apparent:     obsGap.apparent,
+    obsGap:       obsGap.gap,
+    obsGapSeverity: obsGap.severity,
+    // Regime
+    regime:       regime.name,
+    regimeDesc:   regime.desc,
+    // Trajectory
+    dThetaDt:     dThetaDt.rate,
+    direction:    dThetaDt.direction,
+    regimePred:   regimePred ? {
+      nextRegime:   regimePred.nextRegime,
+      sprintsUntil: regimePred.sprintsUntil,
+      urgency:      regimePred.urgency,
+    } : null,
+    // Stress
+    sigmaEff:     sigmaEff.eff,
+    sigmaHidden:  sigmaEff.hidden,
+    sigmaScale:   process.env.DST_DATA_SCALE || 'medium',
+    kappaSat:     kappaSat.saturation,
+    // Risk
+    riskScore:    risk.score,
+    riskLevel:    risk.level,
+    // Signals
+    kappaCount, sigmaCount, rhoCount, secCount,
+    fileCount:    Object.keys(scanResults).length,
+    // Rewrite signal (Proposition 5)
+    rewriteSignal: rewriteSignal.triggered ? {
+      triggered:       true,
+      criticalModules: rewriteSignal.criticalModules,
+      message:         rewriteSignal.message,
+    } : { triggered: false },
+    // Action lists summary
+    actionSummary: {
+      fixTotal:      actionLists.fixTotal,
+      mitigateTotal: actionLists.mitigateTotal,
+      acceptTotal:   actionLists.acceptTotal || 0,
+      amplifyTotal:  actionLists.amplifyTotal,
+      expiredKappaI: actionLists.expiredKappaICount || 0,
+    },
+    // ROI
+    annualCost:   roi.totalAnnual,
+    paybackMonths: roi.paybackMonths,
+    fiveYearROI:  roi.fiveYearROI,
+  };
+
   return {
     // Core (Θ naming)
-    theta, score: theta, // both for backward compat
+    theta, score: theta,
     regime, risk, warning, trend,
     kappaCount, sigmaCount, rhoCount, secCount,
     allFindings, healing, roi,
@@ -912,13 +1053,10 @@ function runFullScan(targetDir='.', options={}) {
     totalFindings: allFindings.length,
     isIncremental,
     // V4
-    dThetaDt,
-    obsGap,
-    sigmaEff,
-    kappaSat,
-    regimePred,
-    rewriteSignal,
-    actionLists,
+    dThetaDt, obsGap, sigmaEff, kappaSat, regimePred, rewriteSignal, actionLists,
+    // V4.5-final
+    structuredReport,
+    astEngineActive: !!babelParser,
   };
 }
 
@@ -1056,34 +1194,69 @@ function calculateObservabilityGap(theta, allFindings) {
 }
 
 // ── V4: σ_eff (EFFECTIVE STRESS) ──────────────────────────────────────────
-function calculateSigmaEff(sigmaCount, kappaCount) {
+function calculateSigmaEff(sigmaCount, kappaCount, theta = 50) {
   // σ_eff = σ_raw − κ_displacement
-  // κ reduces experienced stress but doesn't reduce actual stress
+  // κ reduces experienced stress but doesn't reduce actual stress — it defers it
   const sigmaRaw = sigmaCount;
-  const kappaDisplacement = Math.min(kappaCount * 0.3, sigmaRaw * 0.8); // κ can mask up to 80% of σ
+  const kappaDisplacement = Math.min(kappaCount * 0.3, sigmaRaw * 0.8);
   const sigmaEff = Math.max(0, Math.round((sigmaRaw - kappaDisplacement) * 10) / 10);
   const hidden   = Math.round((sigmaRaw - sigmaEff) * 10) / 10;
+
+  // v4.5: Regime-contextual interpretation — σ_eff means something different per regime.
+  // A number without context tells an engineer nothing actionable.
+  const interpretation =
+    theta >= 75
+      ? (sigmaEff === 0
+          ? 'no amplifiers active — system structurally clean'
+          : 'contained — ρ dominance absorbing amplifier load')
+      : theta >= 50
+      ? sigmaEff > 2
+          ? 'partially exposed — κ masking active but σ pressure rising'
+          : 'manageable — κ holding σ below threshold'
+      : theta >= 25
+      ? 'elevated — κ near saturation, amplifiers increasingly visible'
+      : 'critical — σ dominant, displacement nearly exhausted';
+
   return {
     raw:    sigmaRaw,
     eff:    sigmaEff,
-    hidden: hidden,
-    note:   hidden > 0 ? `${hidden} stress units hidden by κ` : 'No stress masking detected',
+    hidden,
+    note: hidden > 0
+      ? `${hidden} stress units hidden by κ — ${interpretation}`
+      : interpretation,
   };
 }
 
 // ── V4: κ SATURATION ──────────────────────────────────────────────────────
-function calculateKappaSaturation(kappaCount, fileCount, teamSize) {
+function calculateKappaSaturation(kappaCount, fileCount, teamSize, rhoCount = 0, theta = 50) {
   // κ_max estimate: scales with codebase size and team
-  // Heuristic: larger teams / codebases have more displacement capacity
   const kappaMax = Math.max(20, Math.round(Math.sqrt(fileCount) * (teamSize / 5) * 8));
-  const saturation = Math.min(100, Math.round((kappaCount / kappaMax) * 100));
+
+  // v4.5: Net κ pressure = κ findings minus ρ healing signals, relative to Θ
+  // This is the structurally correct quantity:
+  //   High κ + high ρ + high Θ = low net pressure (React: many findings, healthy)
+  //   High κ + low  ρ + low  Θ = high net pressure (Log4j: few defenses, residual)
+  //
+  // netPressure ∈ [0, 1]: 0 = ρ fully absorbs κ, 1 = κ fully dominant
+  const kappaWeight = kappaCount / Math.max(1, kappaMax);
+  const rhoDampener = Math.min(0.8, rhoCount / Math.max(1, kappaCount + rhoCount));
+  const thetaDampener = theta / 100; // high Θ = system absorbing load well
+  const netPressure = Math.max(0, kappaWeight * (1 - rhoDampener) * (1 - thetaDampener * 0.5));
+  const saturation  = Math.min(100, Math.round(netPressure * 100));
+
+  // Warning only fires when net pressure is high AND Θ is low (structurally consistent)
+  const warning = (saturation >= 80 && theta < 50) ? 'κ SATURATION CRITICAL — displacement budget nearly exhausted' :
+                  (saturation >= 60 && theta < 75) ? 'κ saturation elevated — monitor closely' :
+                  null;
+
   return {
     used:       kappaCount,
     max:        kappaMax,
-    saturation, // percent
-    warning:    saturation >= 80 ? 'κ SATURATION CRITICAL — displacement budget nearly exhausted' :
-                saturation >= 60 ? 'κ saturation elevated — monitor closely' :
-                null,
+    saturation, // net κ pressure as % — not raw count ratio
+    warning,
+    note: theta >= 75 && rhoCount > kappaCount
+      ? 'ρ dominant — κ findings absorbed by healing capacity'
+      : null,
   };
 }
 
@@ -1168,6 +1341,30 @@ function detectRewriteSignal(theta, dThetaDt, worstFilesList) {
   };
 }
 
+
+// ── V4.5-final: DST SELF-DIAGNOSIS ───────────────────────────────────────
+// DST_SELF_SCAN=1 → scanner measures its own structural health
+// "The tool that measures health measures its own."
+// This is not a feature — it is proof that DST applies to itself.
+function runSelfScan() {
+  if (!process.env.DST_SELF_SCAN) return null;
+  try {
+    const selfPath = __filename;
+    const result   = runFullScan(require('path').dirname(selfPath), {
+      teamSize: 2,
+      engineerCost: 180_000,
+    });
+    return {
+      theta:   result.theta,
+      regime:  result.regime.name,
+      obsGap:  result.obsGap.gap,
+      kappaA:  result.actionLists.fixTotal,
+      astActive: result.astEngineActive,
+      note: 'Scanner diagnoses itself — DST applies to DST',
+    };
+  } catch { return null; }
+}
+
 module.exports = {
   runFullScan, scanFile, walkDir, detectPatterns,
   calculateScore, classifyRegime, calculateROI,
@@ -1179,4 +1376,6 @@ module.exports = {
   calculateKappaSaturation, calculateDThetaDt,
   predictRegimeTransition, detectRewriteSignal,
   REWRITE_THRESHOLD, REWRITE_DECAY,
+  // V4.5-final
+  runSelfScan, SIGMA_SCALE, KAPPA_I_EXPIRED_PENALTY,
 };
