@@ -21,6 +21,7 @@ The same model, applied to real-world repositories:
 ```text
 React     → Θ ~100 → Elastic
 Next.js   → Θ ~65  → Plastic
+Log4j     → Θ   8  → Residual (84 pt gap — CVE-2021-44228)
 Express   → Θ ~0   → Residual
 ```
 
@@ -37,6 +38,7 @@ Express   → Θ ~0   → Residual
 | `nextjs-case-study.md`         | ⭐ 130k stars · **Plastic regime (Θ 65)** · 15 pt gap · dual-router κ · corporate scale balance (ρ vs κ)             |
 | `express-v4-case-study.md`     | ⭐ 65k stars · **Residual regime (Θ ~0)** · masking dominates · rewrite signal · structural exhaustion               |
 | `web-llm-chat-case-study.md`   | AI demo system · **Residual (Θ 0)** · 100 pt gap · extreme masking under demo pressure                              |
+| `log4shell-case-study.md`      | 🔥 Apache Log4j · **Residual (Θ 8)** · 84 pt gap · CVE-2021-44228 · $10B+ security disaster predicted by structure |
 | `real-world.md`                | 🔥 Minimal example · before/after DST application · fastest way to understand the model                             |
 | `express-codebase.md`          | Short summary + entry point into full Express analysis                                                              |
 
@@ -77,6 +79,7 @@ Then compare:
 * React → Elastic
 * Next.js → Plastic
 * Express → Residual
+* Log4j → Residual (security failure predicted)
 
 That contrast is the model.
 

@@ -144,6 +144,7 @@ DST applied to major systems:
 ```text
 React     → Θ ~100 → Elastic
 Next.js   → Θ ~65  → Plastic
+Log4j     → Θ   8  → Residual (predicted CVE-2021-44228)
 Express   → Θ ~0   → Residual
 ```
 
