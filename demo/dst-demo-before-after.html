@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DST Code Demo — Before & After</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0b0d;
+  --bg2:#111318;
+  --bg3:#1a1d24;
+  --border:#2a2d35;
+  --border2:#3a3d47;
+  --text:#e8eaf0;
+  --muted:#6b7080;
+  --dim:#9299a8;
+  --red:#ff4757;
+  --amber:#ffb830;
+  --green:#2ed573;
+  --blue:#5dade2;
+  --purple:#a78bfa;
+  --red-bg:rgba(255,71,87,.08);
+  --amber-bg:rgba(255,184,48,.08);
+  --green-bg:rgba(46,213,115,.08);
+}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+
+/* HEADER */
+.header{border-bottom:1px solid var(--border);padding:24px 40px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:.05em}
+.logo span{color:var(--green)}
+.tagline{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+
+/* HERO */
+.hero{padding:60px 40px 40px;max-width:900px;margin:0 auto;text-align:center}
+.hero h1{font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1.2;margin-bottom:12px}
+.hero h1 em{font-style:normal;color:var(--green)}
+.hero p{font-size:15px;color:var(--dim);max-width:560px;margin:0 auto 32px}
+
+/* SCORE PILL */
+.score-row{display:flex;gap:12px;justify-content:center;margin-bottom:40px;flex-wrap:wrap}
+.score-pill{display:flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid var(--border);border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--bg2)}
+.score-pill.bad{border-color:rgba(255,71,87,.3);background:var(--red-bg)}
+.score-pill.good{border-color:rgba(46,213,115,.3);background:var(--green-bg)}
+.dot{width:8px;height:8px;border-radius:50%}
+
+/* EXAMPLES */
+.examples{max-width:1100px;margin:0 auto;padding:0 40px 80px}
+.example{margin-bottom:64px}
+.example-header{display:flex;align-items:baseline;gap:16px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.example-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
+.example-title{font-size:18px;font-weight:600}
+.example-tag{font-size:10px;padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-weight:500}
+.tag-kappa{background:var(--red-bg);color:var(--red);border:1px solid rgba(255,71,87,.2)}
+.tag-sigma{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(255,184,48,.2)}
+.tag-rho{background:var(--green-bg);color:var(--green);border:1px solid rgba(46,213,115,.2)}
+
+/* SPLIT */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.split{grid-template-columns:1fr}}
+
+.panel{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg2)}
+.panel-header{padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg3)}
+.panel-label{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500}
+.panel.before .panel-label{color:var(--red)}
+.panel.after .panel-label{color:var(--green)}
+.panel-score{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 8px;border-radius:3px}
+.panel.before .panel-score{background:var(--red-bg);color:var(--red)}
+.panel.after .panel-score{background:var(--green-bg);color:var(--green)}
+
+/* CODE */
+pre{padding:20px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.7;overflow-x:auto;background:transparent}
+.kappa{color:var(--red);background:rgba(255,71,87,.06);border-left:2px solid var(--red);display:block;margin:0 -20px;padding:0 20px}
+.sigma{color:var(--amber);background:rgba(255,184,48,.06);border-left:2px solid var(--amber);display:block;margin:0 -20px;padding:0 20px}
+.rho{color:var(--green)}
+.comment{color:var(--muted)}
+.keyword{color:var(--purple)}
+.string{color:var(--amber)}
+.fn{color:var(--blue)}
+
+/* DIAGNOSIS */
+.diagnosis{margin-top:16px;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:6px}
+.diag-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;font-size:12px}
+.diag-row:last-child{margin-bottom:0}
+.diag-icon{width:16px;flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:10px;padding-top:1px}
+.diag-text{color:var(--dim);line-height:1.5}
+.diag-text strong{color:var(--text);font-weight:500}
+
+/* DELTA */
+.delta{margin-top:16px;display:flex;gap:12px;align-items:center;padding:12px 16px;border:1px solid var(--border2);border-radius:6px;background:var(--bg3)}
+.delta-arrow{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--green)}
+.delta-text{font-size:12px;color:var(--dim)}
+.delta-text strong{color:var(--green)}
+
+/* EQUATION BAR */
+.eq-bar{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px 20px;margin-bottom:32px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);text-align:center}
+.eq-bar span{color:var(--text)}
+
+/* TRAINING SECTION */
+.training{max-width:900px;margin:0 auto;padding:0 40px 80px}
+.training-box{border:1px solid var(--border2);border-radius:8px;overflow:hidden}
+.training-header{padding:16px 20px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.training-title{font-size:15px;font-weight:600}
+.training-sub{font-size:11px;color:var(--muted);margin-left:auto;font-family:'IBM Plex Mono',monospace}
+.training-body{padding:20px}
+.training-body p{font-size:13px;color:var(--dim);margin-bottom:16px;line-height:1.6}
+pre.prompt{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:16px 20px;font-size:12px;line-height:1.8;color:var(--dim);overflow-x:auto}
+pre.prompt .ph{color:var(--green)}
+pre.prompt .rule{color:var(--text)}
+pre.prompt .cmnt{color:var(--muted)}
+.copy-btn{margin-top:12px;padding:8px 20px;background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s}
+.copy-btn:hover{border-color:var(--green);color:var(--green)}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--border);padding:20px 40px;display:flex;align-items:center;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
+.footer a{color:var(--dim);text-decoration:none}
+.footer a:hover{color:var(--green)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">DST<span>/</span>demo</div>
+  <div class="tagline">ρ heals · κ hides · σ kills</div>
+</div>
+
+<div class="hero">
+  <h1>The same code.<br><em>Completely different trajectory.</em></h1>
+  <p>DST doesn't make code prettier. It makes the invisible visible — and shows exactly what each pattern costs your system's future capacity.</p>
+  <div class="score-row">
+    <div class="score-pill bad"><div class="dot" style="background:var(--red)"></div>Before DST — Θ declining</div>
+    <div class="score-pill good"><div class="dot" style="background:var(--green)"></div>After DST — dΘ/dt &gt; 0</div>
+  </div>
+</div>
+
+<div class="examples">
+
+  <div class="eq-bar">
+    dΘ/dt = <span>ρ</span> − σ_eff &nbsp;·&nbsp; σ_eff = σ − (κ_a + κ_c + κ_i) &nbsp;·&nbsp; <span>Θ → 0</span> = system in delayed failure
+  </div>
+
+  <!-- EXAMPLE 1 -->
+  <div class="example">
+    <div class="example-header">
+      <span class="example-num">01</span>
+      <span class="example-title">Error handling — the silent killer</span>
+      <span class="example-tag tag-kappa">κ_a accumulated</span>
+    </div>
+    <div class="split">
+      <div class="panel before">
+        <div class="panel-header">
+          <span class="panel-label">BEFORE — κ_a dominant</span>
+          <span class="panel-score">Θ = 31/100</span>
+        </div>
+        <pre><code><span class="keyword">async function</span> <span class="fn">processPayment</span>(userId, amount) {
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> result = <span class="keyword">await</span> chargeAPI(userId, amount);
+    <span class="keyword">return</span> result;
+  } <span class="keyword">catch</span> (err) {
+<span class="kappa">    console.error(err);                    <span class="comment">// κ_a</span>
+    <span class="keyword">return</span> { success: <span class="keyword">false</span>,             <span class="comment">// κ_a</span>
+              error: <span class="string">'Payment failed'</span> };  <span class="comment">// gap created</span>
+</span>  }
+}</code></pre>
+      </div>
+      <div class="panel after">
+        <div class="panel-header">
+          <span class="panel-label">AFTER — ρ healing</span>
+          <span class="panel-score">Θ = 89/100</span>
+        </div>
+        <pre><code><span class="keyword">async function</span> <span class="fn">processPayment</span>(userId, amount) {
+  <span class="keyword">const</span> result = <span class="keyword">await</span> chargeAPI(userId, amount);
+
+  <span class="keyword">if</span> (!result.ok) {
+<span class="rho">    logger.error(<span class="string">'Payment failed'</span>, {   <span class="comment">// ρ</span>
+      userId, amount,
+      code: result.errorCode,
+      context: <span class="string">'checkout_flow'</span>
+    });
+    <span class="keyword">throw new</span> <span class="fn">PaymentError</span>(             <span class="comment">// ρ</span>
+      result.errorCode, { userId }
+    );
+</span>  }
+  <span class="keyword">return</span> result.data;
+}</code></pre>
+      </div>
+    </div>
+    <div class="diagnosis">
+      <div class="diag-row"><span class="diag-icon" style="color:var(--red)">κ_a</span><span class="diag-text"><strong>Silent catch</strong> — error disappears. Every caller inherits hidden fragility. Observability gap opens. Future debugging cost: 6hrs/incident × 12mo = compounding.</span></div>
+      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>Explicit throw</strong> — failure surfaces immediately. Structured log gives traceable context. Every caller gets a contract: success or typed exception. Gap closed.</span></div>
+    </div>
+    <div class="delta">
+      <span class="delta-arrow">↑</span>
+      <span class="delta-text">Θ: 31 → 89 &nbsp;·&nbsp; <strong>+58 pts</strong> &nbsp;·&nbsp; dΘ/dt flips from negative to positive &nbsp;·&nbsp; every future feature built on this function is now structurally cheaper</span>
+    </div>
+  </div>
+
+  <!-- EXAMPLE 2 -->
+  <div class="example">
+    <div class="example-header">
+      <span class="example-num">02</span>
+      <span class="example-title">State management — the invisible mutation</span>
+      <span class="example-tag tag-kappa">κ_a accumulated</span>
+    </div>
+    <div class="split">
+      <div class="panel before">
+        <div class="panel-header">
+          <span class="panel-label">BEFORE — κ_a dominant</span>
+          <span class="panel-score">Θ = 28/100</span>
+        </div>
+        <pre><code><span class="keyword">let</span> cart = { items: [], total: 0 };
+
+<span class="keyword">function</span> <span class="fn">addToCart</span>(product) {
+<span class="kappa">  cart.items.push(product);         <span class="comment">// κ_a mutation</span>
+  cart.total += product.price;      <span class="comment">// κ_a mutation</span>
+</span>  saveCartToLocalStorage(cart);
+  <span class="keyword">return</span> cart;   <span class="comment">// same mutated object</span>
+}
+
+<span class="comment">// caller has no idea cart changed
+// testing requires recreating global state
+// concurrency = silent corruption</span></code></pre>
+      </div>
+      <div class="panel after">
+        <div class="panel-header">
+          <span class="panel-label">AFTER — ρ healing</span>
+          <span class="panel-score">Θ = 92/100</span>
+        </div>
+        <pre><code><span class="keyword">function</span> <span class="fn">addToCart</span>(currentCart, product) {
+<span class="rho">  <span class="keyword">const</span> newCart = {              <span class="comment">// ρ new object</span>
+    ...currentCart,
+    items: [...currentCart.items,
+             product],
+    total: currentCart.total
+           + product.price
+  };
+</span>  saveCartToLocalStorage(newCart);
+  <span class="keyword">return</span> newCart;  <span class="comment">// explicit, predictable</span>
+}
+
+<span class="comment">// pure function — testable in isolation
+// callers see exactly what changed
+// no global state to manage</span></code></pre>
+      </div>
+    </div>
+    <div class="diagnosis">
+      <div class="diag-row"><span class="diag-icon" style="color:var(--red)">κ_a</span><span class="diag-text"><strong>Implicit state mutation</strong> — callers cannot predict side effects. Every function that touches cart must know its history. Hidden coupling that kills Θ across the entire call graph.</span></div>
+      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>Pure function</strong> — input in, new output out. Testable in isolation. Predictable. Every future caller gets a clear contract. dΘ/dt becomes positive for all downstream code.</span></div>
+    </div>
+    <div class="delta">
+      <span class="delta-arrow">↑</span>
+      <span class="delta-text">Θ: 28 → 92 &nbsp;·&nbsp; <strong>+64 pts</strong> &nbsp;·&nbsp; 60 lines of global-state management eliminated &nbsp;·&nbsp; function became 12 lines and fully testable</span>
+    </div>
+  </div>
+
+  <!-- EXAMPLE 3 -->
+  <div class="example">
+    <div class="example-header">
+      <span class="example-num">03</span>
+      <span class="example-title">Data fetching — the silent σ bomb</span>
+      <span class="example-tag tag-sigma">σ amplifier</span>
+    </div>
+    <div class="split">
+      <div class="panel before">
+        <div class="panel-header">
+          <span class="panel-label">BEFORE — σ amplifier</span>
+          <span class="panel-score">Θ = 12/100</span>
+        </div>
+        <pre><code><span class="keyword">async function</span> <span class="fn">loadUserProfiles</span>(userIds) {
+  <span class="keyword">const</span> profiles = [];
+<span class="sigma">  <span class="keyword">for</span> (<span class="keyword">const</span> id <span class="keyword">of</span> userIds) {      <span class="comment">// σ N+1</span>
+    <span class="keyword">const</span> p = <span class="keyword">await</span> fetch(          <span class="comment">// σ scales</span>
+      <span class="string">`/api/users/${id}`</span>            <span class="comment">// with data</span>
+    );
+    profiles.push(p);
+  }
+</span>  <span class="keyword">return</span> profiles;
+}
+
+<span class="comment">// 5 users:   5 requests  ← fine
+// 500 users: 500 requests ← database dies
+// same code, catastrophic at scale</span></code></pre>
+      </div>
+      <div class="panel after">
+        <div class="panel-header">
+          <span class="panel-label">AFTER — σ resolved</span>
+          <span class="panel-score">Θ = 94/100</span>
+        </div>
+        <pre><code><span class="keyword">async function</span> <span class="fn">loadUserProfiles</span>(userIds) {
+<span class="rho">  <span class="keyword">if</span> (userIds.length === 0)         <span class="comment">// ρ guard</span>
+    <span class="keyword">return</span> [];
+
+  <span class="keyword">const</span> response = <span class="keyword">await</span> fetch(    <span class="comment">// ρ single</span>
+    <span class="string">'/api/users/batch'</span>, {           <span class="comment">// request</span>
+    method: <span class="string">'POST'</span>,
+    body: JSON.stringify({ ids: userIds })
+  });
+
+  <span class="keyword">if</span> (!response.ok)
+    <span class="keyword">throw new</span> <span class="fn">UserFetchError</span>(       <span class="comment">// ρ explicit</span>
+      { count: userIds.length }
+    );
+</span>  <span class="keyword">return</span> response.json();
+}</code></pre>
+      </div>
+    </div>
+    <div class="diagnosis">
+      <div class="diag-row"><span class="diag-icon" style="color:var(--amber)">σ</span><span class="diag-text"><strong>N+1 amplifier</strong> — stress scales with data size. Same code that works with 5 users catastrophically fails at 500. This is σ: the same pattern gets worse as load grows.</span></div>
+      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>Batch request</strong> — O(1) requests regardless of input size. Error handling explicit. Θ stays constant as data scales 100×. σ_eff → 0.</span></div>
+    </div>
+    <div class="delta">
+      <span class="delta-arrow">↑</span>
+      <span class="delta-text">Θ: 12 → 94 &nbsp;·&nbsp; <strong>+82 pts</strong> &nbsp;·&nbsp; σ amplifier eliminated &nbsp;·&nbsp; scales to 100× users with zero code change</span>
+    </div>
+  </div>
+
+</div>
+
+
+  <!-- EXAMPLE 4 -->
+  <div class="example">
+    <div class="example-header">
+      <span class="example-num">04</span>
+      <span class="example-title">React hooks — the dependency lie</span>
+      <span class="example-tag tag-kappa">κ_a accumulated</span>
+    </div>
+    <div class="split">
+      <div class="panel before">
+        <div class="panel-header">
+          <span class="panel-label">BEFORE — κ_a dominant</span>
+          <span class="panel-score">Θ = 18/100</span>
+        </div>
+        <pre><code><span class="keyword">function</span> <span class="fn">UserProfile</span>({ userId }) {
+  <span class="keyword">const</span> [user, setUser] = useState(<span class="keyword">null</span>);
+
+  useEffect(() => {
+<span class="kappa">    fetchUser(userId).then(setUser); <span class="comment">// κ_a</span>
+  }, []); <span class="comment">// κ_a: empty array LIES</span>
+          <span class="comment">// userId changes → stale data</span>
+          <span class="comment">// fetch fails → silence</span>
+          <span class="comment">// unmount mid-fetch → memory leak</span>
+</span>
+  <span class="keyword">return</span> &lt;Profile user={user} /&gt;;
+  <span class="comment">// user=null on first render → crash</span>
+}</code></pre>
+      </div>
+      <div class="panel after">
+        <div class="panel-header">
+          <span class="panel-label">AFTER — ρ healing</span>
+          <span class="panel-score">Θ = 85/100</span>
+        </div>
+        <pre><code><span class="keyword">function</span> <span class="fn">UserProfile</span>({ userId }) {
+  <span class="keyword">const</span> [user, setUser] = useState(<span class="keyword">null</span>);
+  <span class="keyword">const</span> [loading, setLoading] = useState(<span class="keyword">false</span>);
+  <span class="keyword">const</span> [error, setError] = useState(<span class="keyword">null</span>);
+
+  useEffect(() => {
+    <span class="keyword">if</span> (!userId) <span class="keyword">return</span>;
+<span class="rho">    <span class="keyword">let</span> cancelled = <span class="keyword">false</span>; <span class="comment">// ρ: cleanup flag</span>
+    setLoading(<span class="keyword">true</span>);
+    fetchUser(userId)
+      .then(d  => { <span class="keyword">if</span> (!cancelled) setUser(d); })
+      .catch(e  => { <span class="keyword">if</span> (!cancelled) setError(e); })
+      .finally(() => { <span class="keyword">if</span> (!cancelled) setLoading(<span class="keyword">false</span>); });
+    <span class="keyword">return</span> () => { cancelled = <span class="keyword">true</span>; }; <span class="comment">// ρ: cleanup</span>
+  }, [userId]); <span class="comment">// ρ: honest dependencies</span>
+</span>
+  <span class="keyword">if</span> (loading) <span class="keyword">return</span> &lt;Spinner /&gt;;
+  <span class="keyword">if</span> (error)   <span class="keyword">return</span> &lt;ErrorView error={error} /&gt;;
+  <span class="keyword">return</span> &lt;Profile user={user} /&gt;;
+}</code></pre>
+      </div>
+    </div>
+    <div class="diagnosis">
+      <div class="diag-row"><span class="diag-icon" style="color:var(--red)">κ_a</span><span class="diag-text"><strong>Empty dependency array</strong> — lies about what the effect depends on. userId changes, component shows stale user. Works in every demo. Fails in every production app with navigation.</span></div>
+      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>Honest deps + cleanup flag</strong> — effect re-runs when userId changes. Cancelled flag prevents stale state on fast navigation. Error state surfaces failure explicitly. Three gaps closed at once.</span></div>
+    </div>
+    <div class="delta">
+      <span class="delta-arrow">↑</span>
+      <span class="delta-text">Θ: 18 → 85 &nbsp;·&nbsp; <strong>+67 pts</strong> &nbsp;·&nbsp; three κ_a patterns stacked: dependency lie + missing cleanup + silent catch — all eliminated together</span>
+    </div>
+  </div>
+
+  <!-- EXAMPLE 5 -->
+  <div class="example">
+    <div class="example-header">
+      <span class="example-num">05</span>
+      <span class="example-title">Caching — the σ disguised as optimization</span>
+      <span class="example-tag tag-sigma">σ + κ_a</span>
+    </div>
+    <div class="split">
+      <div class="panel before">
+        <div class="panel-header">
+          <span class="panel-label">BEFORE — σ + κ_a</span>
+          <span class="panel-score">Θ = 8/100</span>
+        </div>
+        <pre><code><span class="keyword">const</span> userCache = {}; <span class="comment">// σ: grows forever</span>
+
+<span class="keyword">async function</span> <span class="fn">getUser</span>(userId) {
+  <span class="keyword">if</span> (userCache[userId]) {
+<span class="kappa">    <span class="keyword">return</span> userCache[userId]; <span class="comment">// κ_a: stale data</span>
+    <span class="comment">// deleted user? still here</span>
+    <span class="comment">// updated name? old name shown</span>
+    <span class="comment">// no TTL, no invalidation</span>
+</span>  }
+<span class="sigma">  <span class="keyword">const</span> user = <span class="keyword">await</span> fetchUser(userId);
+  userCache[userId] = user; <span class="comment">// σ: permanent entry</span>
+</span>  <span class="keyword">return</span> user;
+}
+<span class="comment">// month 1:  200 entries, fine
+// month 6:  50,000 entries
+// memory climbs, no one knows why</span></code></pre>
+      </div>
+      <div class="panel after">
+        <div class="panel-header">
+          <span class="panel-label">AFTER — σ resolved + ρ</span>
+          <span class="panel-score">Θ = 91/100</span>
+        </div>
+        <pre><code><span class="keyword">import</span> LRU <span class="keyword">from</span> <span class="string">'lru-cache'</span>;
+
+<span class="rho"><span class="keyword">const</span> userCache = <span class="keyword">new</span> LRU({
+  max: 500,              <span class="comment">// ρ: bounded forever</span>
+  ttl: 5 * 60_000,      <span class="comment">// ρ: 5min max stale</span>
+});
+</span>
+<span class="keyword">async function</span> <span class="fn">getUser</span>(userId) {
+  <span class="keyword">const</span> cached = userCache.get(userId);
+  <span class="keyword">if</span> (cached) <span class="keyword">return</span> cached;
+
+  <span class="keyword">const</span> user = <span class="keyword">await</span> fetchUser(userId);
+  userCache.set(userId, user);
+  <span class="keyword">return</span> user;
+}
+<span class="rho">
+<span class="keyword">function</span> <span class="fn">invalidateUser</span>(userId) {
+  userCache.delete(userId); <span class="comment">// ρ: explicit path</span>
+}
+</span>
+<span class="comment">// month 1:  max 500 entries
+// month 6:  still max 500 entries
+// memory stable, data fresh</span></code></pre>
+      </div>
+    </div>
+    <div class="diagnosis">
+      <div class="diag-row"><span class="diag-icon" style="color:var(--amber)">σ+κ_a</span><span class="diag-text"><strong>Unbounded cache + stale data</strong> — the worst combination. σ grows memory proportionally to unique users forever. κ_a returns wrong data silently. Both feel like features ("it's fast!") while structurally degrading the system.</span></div>
+      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>LRU + TTL + invalidation</strong> — memory bounded permanently. Data freshness guaranteed by TTL. Explicit invalidation path for immediate updates. Three structural guarantees in 4 lines.</span></div>
+    </div>
+    <div class="delta">
+      <span class="delta-arrow">↑</span>
+      <span class="delta-text">Θ: 8 → 91 &nbsp;·&nbsp; <strong>+83 pts</strong> &nbsp;·&nbsp; lowest starting score of all 6 examples — σ+κ_a together is the most structurally damaging combination in any codebase</span>
+    </div>
+  </div>
+
+  <!-- EXAMPLE 6 -->
+  <div class="example">
+    <div class="example-header">
+      <span class="example-num">06</span>
+      <span class="example-title">Async flows — three sins, one function</span>
+      <span class="example-tag tag-sigma">σ + κ_a</span>
+    </div>
+    <div class="split">
+      <div class="panel before">
+        <div class="panel-header">
+          <span class="panel-label">BEFORE — σ + κ_a</span>
+          <span class="panel-score">Θ = 22/100</span>
+        </div>
+        <pre><code><span class="keyword">async function</span> <span class="fn">initDashboard</span>(userId) {
+
+<span class="kappa">  logAnalytics(<span class="string">'opened'</span>, userId); <span class="comment">// κ_a: fire-forget</span>
+  <span class="comment">// failure: invisible</span>
+</span>
+<span class="sigma">  <span class="keyword">const</span> user   = <span class="keyword">await</span> fetchUser(userId);  <span class="comment">// σ</span>
+  <span class="keyword">const</span> prefs  = <span class="keyword">await</span> fetchPrefs(userId); <span class="comment">// σ waits</span>
+  <span class="keyword">const</span> notifs = <span class="keyword">await</span> fetchNotifs(userId);<span class="comment">// σ waits</span>
+  <span class="comment">// total: 600ms — sequential, independent</span>
+  <span class="comment">// add 1 more call: +200ms forever</span>
+</span>
+<span class="kappa">  <span class="keyword">const</span> data = <span class="keyword">await</span> fetchData(userId); <span class="comment">// κ_a</span>
+  <span class="comment">// no timeout — hangs forever</span>
+  <span class="comment">// UI spins indefinitely on failure</span>
+</span>
+  <span class="keyword">return</span> { user, prefs, notifs, data };
+}</code></pre>
+      </div>
+      <div class="panel after">
+        <div class="panel-header">
+          <span class="panel-label">AFTER — σ + κ_a resolved</span>
+          <span class="panel-score">Θ = 88/100</span>
+        </div>
+        <pre><code><span class="keyword">async function</span> <span class="fn">initDashboard</span>(userId) {
+
+<span class="rho">  logAnalytics(<span class="string">'opened'</span>, userId)   <span class="comment">// ρ: handled</span>
+    .catch(e => logger.warn(<span class="string">'analytics'</span>, e));
+</span>
+<span class="rho">  <span class="keyword">const</span> [user, prefs, notifs] =    <span class="comment">// ρ: parallel</span>
+    <span class="keyword">await</span> Promise.all([             <span class="comment">// 200ms total</span>
+      fetchUser(userId),            <span class="comment">// not 600ms</span>
+      fetchPrefs(userId),
+      fetchNotifs(userId),
+    ]);
+</span>
+<span class="rho">  <span class="keyword">const</span> data = <span class="keyword">await</span> Promise.race([ <span class="comment">// ρ: bounded</span>
+    fetchData(userId),
+    <span class="keyword">new</span> Promise((_,r) =>
+      setTimeout(() => r(
+        <span class="keyword">new</span> <span class="fn">TimeoutError</span>({ ms: 3000 })
+      ), 3000)
+    )
+  ]);
+</span>
+  <span class="keyword">return</span> { user, prefs, notifs, data };
+}</code></pre>
+      </div>
+    </div>
+    <div class="diagnosis">
+      <div class="diag-row"><span class="diag-icon" style="color:var(--amber)">σ+κ_a</span><span class="diag-text"><strong>Sequential + fire-forget + no timeout</strong> — 600ms that grows with every added call. Analytics failures invisible. Dashboard can hang for minutes. Three completely separate structural problems in 15 lines.</span></div>
+      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>Promise.all + .catch + Promise.race</strong> — 200ms regardless of call count. Analytics handled without blocking. 3 second ceiling on data fetch. σ eliminated, both κ_a gaps closed. Same data, 3× faster, bounded failure.</span></div>
+    </div>
+    <div class="delta">
+      <span class="delta-arrow">↑</span>
+      <span class="delta-text">Θ: 22 → 88 &nbsp;·&nbsp; <strong>+66 pts</strong> &nbsp;·&nbsp; Promise.all alone = 3× faster &nbsp;·&nbsp; timeout adds 4 lines and eliminates infinite hang &nbsp;·&nbsp; .catch adds 1 line and closes analytics gap</span>
+    </div>
+  </div>
+
+  <!-- SUMMARY TABLE -->
+  <div style="margin-bottom:48px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+    <div style="padding:12px 20px;background:var(--bg3);border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)">pattern summary — all 6 examples</div>
+    <table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12px">
+      <thead><tr style="border-bottom:1px solid var(--border)">
+        <th style="padding:10px 16px;text-align:left;color:var(--muted);font-weight:500">#</th>
+        <th style="padding:10px 16px;text-align:left;color:var(--muted);font-weight:500">pattern</th>
+        <th style="padding:10px 16px;text-align:left;color:var(--muted);font-weight:500">type</th>
+        <th style="padding:10px 16px;text-align:right;color:var(--muted);font-weight:500">before</th>
+        <th style="padding:10px 16px;text-align:right;color:var(--muted);font-weight:500">after</th>
+        <th style="padding:10px 16px;text-align:right;color:var(--muted);font-weight:500">Δ</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 16px;color:var(--muted)">01</td><td style="padding:8px 16px;color:var(--text)">silent catch</td><td style="padding:8px 16px;color:var(--red)">κ_a</td><td style="padding:8px 16px;text-align:right;color:var(--red)">31</td><td style="padding:8px 16px;text-align:right;color:var(--green)">89</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+58</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 16px;color:var(--muted)">02</td><td style="padding:8px 16px;color:var(--text)">state mutation</td><td style="padding:8px 16px;color:var(--red)">κ_a</td><td style="padding:8px 16px;text-align:right;color:var(--red)">28</td><td style="padding:8px 16px;text-align:right;color:var(--green)">92</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+64</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 16px;color:var(--muted)">03</td><td style="padding:8px 16px;color:var(--text)">N+1 fetch</td><td style="padding:8px 16px;color:var(--amber)">σ</td><td style="padding:8px 16px;text-align:right;color:var(--red)">12</td><td style="padding:8px 16px;text-align:right;color:var(--green)">94</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+82</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 16px;color:var(--muted)">04</td><td style="padding:8px 16px;color:var(--text)">dependency lie</td><td style="padding:8px 16px;color:var(--red)">κ_a</td><td style="padding:8px 16px;text-align:right;color:var(--red)">18</td><td style="padding:8px 16px;text-align:right;color:var(--green)">85</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+67</td></tr>
+        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 16px;color:var(--muted)">05</td><td style="padding:8px 16px;color:var(--text)">unbounded cache</td><td style="padding:8px 16px;color:var(--amber)">σ + κ_a</td><td style="padding:8px 16px;text-align:right;color:var(--red)">8</td><td style="padding:8px 16px;text-align:right;color:var(--green)">91</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+83</td></tr>
+        <tr><td style="padding:8px 16px;color:var(--muted)">06</td><td style="padding:8px 16px;color:var(--text)">three async sins</td><td style="padding:8px 16px;color:var(--amber)">σ + κ_a</td><td style="padding:8px 16px;text-align:right;color:var(--red)">22</td><td style="padding:8px 16px;text-align:right;color:var(--green)">88</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+66</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+<!-- DST AI TRAINING PROMPT -->
+<div class="training">
+  <div class="training-box">
+    <div class="training-header">
+      <span class="training-title">DST coding system prompt</span>
+      <span class="training-sub">paste into any AI assistant → instant DST-aware coding</span>
+    </div>
+    <div class="training-body">
+      <p>Paste this into your AI assistant's system prompt. Every response will automatically classify patterns as κ_a / κ_c / κ_i and write code that keeps dΘ/dt positive.</p>
+      <pre class="prompt" id="prompt-text"><span class="cmnt"># DST-Aware Coding Assistant</span>
+<span class="cmnt"># Declining Stress Threshold — ρ heals · κ hides · σ kills</span>
+
+<span class="rule">Before writing any code, classify the request:</span>
+<span class="ph">- Is this healing (ρ) or masking (κ)?</span>
+<span class="ph">- If κ: accumulated (fix it) / conscripted (accept it) / intentional (document it)?</span>
+
+<span class="rule">Mandatory rules — never violate:</span>
+<span class="ph">1. No silent catch blocks. Every error must throw, rethrow, or log structured + throw.</span>
+<span class="ph">2. No implicit state mutation. Return new objects. Side effects must be explicit.</span>
+<span class="ph">3. No unbounded collections. Every array/map that grows must have a max size or eviction.</span>
+<span class="ph">4. No N+1 patterns. DB/API calls inside loops are σ amplifiers — batch them.</span>
+<span class="ph">5. No TODO without a ticket reference and expiration condition.</span>
+<span class="ph">6. No `any` type without a documented reason and upstream issue link.</span>
+
+<span class="rule">For every function written, ask:</span>
+<span class="ph">- Does this make dΘ/dt positive (ρ) or negative (κ)?</span>
+<span class="ph">- Is failure visible or invisible to callers?</span>
+<span class="ph">- Does this scale safely or amplify stress with data size?</span>
+
+<span class="rule">Output format for code reviews:</span>
+<span class="ph">κ_a (fix): [pattern] — [why it declines Θ] — [specific fix]</span>
+<span class="ph">κ_c (mitigate): [pattern] — [domain constraint] — [instrumentation approach]</span>
+<span class="ph">ρ (preserve): [pattern] — [why it heals Θ]</span>
+<span class="ph">σ (resolve first): [amplifier] — [scale factor] — [batch/bound fix]</span>
+
+<span class="cmnt"># DST Framework · SSRN 6434119 · Idan Rephiah · 2026</span></pre>
+      <button class="copy-btn" onclick="copyPrompt()">copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>DST Framework · <a href="https://ssrn.com/abstract=6434119">SSRN 6434119</a> · Idan Rephiah · 2026</span>
+  <span><a href="https://idanreph.github.io/dst--theory-/">Theory</a> · <a href="https://github.com/idanreph/DST-framework">GitHub</a> · ρ heals · κ hides · σ kills</span>
+</div>
+
+<script>
+function copyPrompt(){
+  const text=document.getElementById('prompt-text').innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=document.querySelector('.copy-btn');
+    btn.textContent='copied ✓';
+    btn.style.borderColor='var(--green)';
+    btn.style.color='var(--green)';
+    setTimeout(()=>{btn.textContent='copy prompt';btn.style.borderColor='';btn.style.color=''},2000);
+  });
+}
+</script>
+</body>
+</html>
