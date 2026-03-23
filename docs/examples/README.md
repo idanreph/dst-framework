@@ -47,6 +47,7 @@ The risk score is 100/100 CRITICAL despite Elastic regime. The health is mainten
 | `facebook-react-case-study.md` | ⭐ 228k stars · **Elastic regime (Θ ~100)** · structure dominates · inverted observability gap · strong ρ discipline |
 | `nextjs-case-study.md`         | ⭐ 130k stars · **Plastic regime (Θ 65)** · 15 pt gap · dual-router κ · corporate scale balance (ρ vs κ)             |
 | `express-v4-case-study.md`     | ⭐ 65k stars · **Residual regime (Θ ~0)** · masking dominates · rewrite signal · structural exhaustion               |
+| `express-v45-rescan.md`        | ⭐ 65k stars · **V4.5-final rescan** · Θ=0 confirmed · ΔΘ gate active · hyperscale collapses apparent to 0          |
 | `web-llm-chat-case-study.md`   | AI demo system · **Residual (Θ 0)** · 100 pt gap · extreme masking under demo pressure                              |
 | `log4shell-case-study.md`      | 🔥 Apache Log4j · **Residual (Θ 8)** · 84 pt gap · CVE-2021-44228 · $10B+ security disaster predicted by structure |
 | `real-world.md`                | 🔥 Minimal example · before/after DST application · fastest way to understand the model                             |
@@ -62,6 +63,19 @@ V3 said Plastic (52/100). V4 says Residual (0/100). The reason: V4 correctly wei
 The key V4 insight: the middleware mutation model (`req.user = ...`, `Object.setPrototypeOf(req, ...)`) is κ_c — domain-forced, not accumulated. V3 flagged it as "fix this." V4 correctly says "accept the structural floor, instrument it." That distinction is what makes a senior engineer trust the tool.
 
 Rewrite signal triggered on two test files — not the library itself. The test suite is in worse structural shape than the production code. That's a maintenance signal.
+
+---
+
+### [`express-v45-rescan.md`](./express-v45-rescan.md)
+**⭐ 65k · Residual · Θ=0 · V4.5-final rescan**
+
+The V4.5 rescan of the same Express v5.2.1 commit. Structural verdict unchanged: Θ=0, Residual, rewrite signal active. What V4.5 adds is three enforcement layers on top of the V4 diagnosis:
+
+- **σ hyperscale:** apparent health drops from 20 to 0 at `DST_DATA_SCALE=hyperscale` — the gap closes because the system is fully saturated at production scale
+- **ΔΘ gate:** Express is permanently in Condition 1 (Residual) — any PR with negative Θ impact will be blocked by CI
+- **κ_i contracts:** 0 annotations found — all 150 κ findings are undated, unacknowledged accumulated debt
+
+The asymmetry with React makes the model exact: React's ρ dominance absorbs hyperscale σ (no Θ change). Express's κ dominance means hyperscale σ collapses the apparent health to 0. Same scanner. Same features. Opposite structural positions.
 
 ---
 
