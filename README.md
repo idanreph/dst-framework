@@ -1,4 +1,4 @@
-Yes — here’s a tighter **README v4.5-final** you can paste in now. I cleaned the wording, updated it to match what you actually have, added the two live URLs at the top, folded in **Compass**, and made the repo structure match the current layout better.
+
 
 ````markdown
 # DST Framework — Declining Stress Threshold
