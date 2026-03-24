@@ -40,7 +40,7 @@ The risk score is 100/100 CRITICAL despite Elastic regime. The health is mainten
 ---
 
 ### [`react-v45-rescan.md`](./react-v45-rescan.md)
-**⭐ 228k · Elastic · Θ=100 · V4.5-final rescan**
+**⭐ 228k · Elastic · Θ=100 · V4.5 rescan (historical)**
 
 The V4.5 rescan of facebook/react at commit `ed69815` on the main branch — 4,202 files vs the 1,864 files scanned in V4. The expanded scan surface revealed more κ and σ instances, but ρ grew proportionally faster. Three V4.5 capabilities tested:
 
@@ -48,7 +48,20 @@ The V4.5 rescan of facebook/react at commit `ed69815` on the main branch — 4,2
 - **ΔΘ gate:** clear — React is Elastic, gate never triggers
 - **κ_i contracts:** 0 annotations — expected; the V4.5 feature provides infrastructure the React team hasn't adopted
 
-Key v4.5 finding: σ_eff jumped from 1.6 to 4.8 as the wider scan surface exposed three times as many stress amplifiers. React's ρ:κ ratio is absorbing that increase. The finding worth watching: 22 unbounded growth patterns now masked by κ discipline — if that discipline ever slips, the σ_eff becomes visible immediately.
+*Historical record — produced with a pre-final v4.5 scanner build. See `react-v45-final-rescan.md` for the confirmed-final scan.*
+
+---
+
+### [`react-v45-final-rescan.md`](./react-v45-final-rescan.md)
+**⭐ 228k · Elastic · Θ=100 · V4.5-final rescan**
+
+Fresh DST v4.5-final rescan of facebook/react at commit `ed69815` — same 4,202 source files, scanner confirmed at v4.5-final (`DST DIAGNOSTIC — v4.5-final` banner). All three v4.5 capabilities confirmed:
+
+- **σ hyperscale:** output identical — ρ dominance (13,483 signals) absorbs 4× σ penalty without regime shift
+- **ΔΘ gate:** clear — Elastic regime, condition 1 never met
+- **κ_i contracts:** 0 annotations — all structural debt is unacknowledged (expected; team doesn't use DST annotations)
+
+Key final finding: σ_eff 4.8 (19.2 stress units hidden by κ) — three times more stress amplifiers than the V4 scan, all absorbed by ρ. The 22 unbounded growth patterns are the finding worth watching if κ discipline ever slips.
 
 ---
 
@@ -58,11 +71,13 @@ Key v4.5 finding: σ_eff jumped from 1.6 to 4.8 as the wider scan surface expose
 | File                           | Summary                                                                                                             |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
 | `facebook-react-case-study.md` | ⭐ 228k stars · **Elastic regime (Θ ~100)** · structure dominates · inverted observability gap · strong ρ discipline |
-| `react-v45-rescan.md`          | ⭐ 228k stars · **V4.5-final rescan** · Θ=100 confirmed · +125% files · σ_eff 1.6→4.8 · ρ dominance absorbs hyperscale |
+| `react-v45-rescan.md`          | ⭐ 228k stars · **V4.5 rescan (historical)** · Θ=100 confirmed · +125% files · σ_eff 1.6→4.8 · pre-final scanner  |
+| `react-v45-final-rescan.md`    | ⭐ 228k stars · **V4.5-final rescan** · Θ=100 confirmed · ρ dominance absorbs hyperscale · ΔΘ gate clear           |
 | `nextjs-case-study.md`         | ⭐ 130k stars · **Plastic regime (Θ 65)** · 15 pt gap · dual-router κ · corporate scale balance (ρ vs κ)             |
 | `nextjs-v45-rescan.md`         | ⭐ 130k stars · **V4.5-final rescan** · Θ=65 confirmed · 35 pt buffer · hyperscale apparent drops 80→20 · gap inverts |
 | `express-v4-case-study.md`     | ⭐ 65k stars · **Residual regime (Θ ~0)** · masking dominates · rewrite signal · structural exhaustion               |
-| `express-v45-rescan.md`        | ⭐ 65k stars · **V4.5-final rescan** · Θ=0 confirmed · ΔΘ gate active · hyperscale collapses apparent to 0          |
+| `express-v45-rescan.md`        | ⭐ 65k stars · **V4.5 rescan (historical)** · Θ=0 confirmed · ΔΘ gate active · pre-final scanner                   |
+| `express-v45-final-rescan.md`  | ⭐ 65k stars · **V4.5-final rescan** · Θ=0 confirmed · hyperscale collapses apparent to 0 · ΔΘ gate enforced       |
 | `web-llm-chat-case-study.md`   | AI demo system · **Residual (Θ 0)** · 100 pt gap · extreme masking under demo pressure                              |
 | `web-llm-chat-v45-rescan.md`   | AI demo system · **V4.5-final rescan** · Θ=0 confirmed · 0 σ findings · hyperscale no effect · gap purely κ_a-driven |
 | `log4shell-case-study.md`      | 🔥 Apache Log4j · **Residual (Θ 8)** · 84 pt gap · CVE-2021-44228 · $10B+ security disaster predicted by structure |
@@ -97,7 +112,7 @@ Rewrite signal triggered on two test files — not the library itself. The test 
 ---
 
 ### [`express-v45-rescan.md`](./express-v45-rescan.md)
-**⭐ 65k · Residual · Θ=0 · V4.5-final rescan**
+**⭐ 65k · Residual · Θ=0 · V4.5 rescan (historical)**
 
 The V4.5 rescan of the same Express v5.2.1 commit. Structural verdict unchanged: Θ=0, Residual, rewrite signal active. What V4.5 adds is three enforcement layers on top of the V4 diagnosis:
 
@@ -105,7 +120,20 @@ The V4.5 rescan of the same Express v5.2.1 commit. Structural verdict unchanged:
 - **ΔΘ gate:** Express is permanently in Condition 1 (Residual) — any PR with negative Θ impact will be blocked by CI
 - **κ_i contracts:** 0 annotations found — all 150 κ findings are undated, unacknowledged accumulated debt
 
-The asymmetry with React makes the model exact: React's ρ dominance absorbs hyperscale σ (no Θ change). Express's κ dominance means hyperscale σ collapses the apparent health to 0. Same scanner. Same features. Opposite structural positions.
+*Preserved as historical record alongside the confirmed-final scan. See `express-v45-final-rescan.md`.*
+
+---
+
+### [`express-v45-final-rescan.md`](./express-v45-final-rescan.md)
+**⭐ 65k · Residual · Θ=0 · V4.5-final rescan**
+
+Fresh DST v4.5-final rescan of expressjs/express v5.2.1 at commit `6c4249f` — same 141 source files, scanner confirmed at v4.5-final (`DST DIAGNOSTIC — v4.5-final` banner). All three v4.5 capabilities confirmed:
+
+- **σ hyperscale:** apparent health drops from 20 to 0 — gap closes entirely at production scale; `view-locals/index.js` crosses the rewrite threshold
+- **ΔΘ gate:** Condition 1 permanently met (Residual) — any PR with negative Θ impact blocked on second scan
+- **κ_i contracts:** 0 annotations — all 150 κ findings are unacknowledged, undated, unowned accumulated debt
+
+The asymmetry with React makes the model exact: React's ρ dominance absorbs hyperscale σ (no Θ change). Express's κ dominance means hyperscale σ collapses apparent health to 0. Same scanner. Same features. Opposite structural positions.
 
 ---
 
@@ -224,6 +252,8 @@ The same scanner. The same version. Zero domain knowledge on any codebase.
 * web-llm-chat → Residual (maximum observability gap)
 
 V4.5 rescan files add a second structural layer across all five systems — confirming the regime verdicts are stable, and surfacing what the new enforcement and scaling capabilities reveal at each regime position.
+
+V4.5-final rescan files (`react-v45-final-rescan.md`, `express-v45-final-rescan.md`) confirm the same verdicts against the confirmed-final scanner build (`DST DIAGNOSTIC — v4.5-final` banner). All historical scans are preserved alongside the final versions.
 
 Domain is irrelevant. Structure is universal.
 
