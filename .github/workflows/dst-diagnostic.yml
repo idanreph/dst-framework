@@ -145,7 +145,7 @@ jobs:
           # V4.5-final: self-diagnosis + structured output
           DST_SELF_SCAN:      ${{ vars.DST_SELF_SCAN         || '' }}
           DST_JSON_OUTPUT:    ${{ vars.DST_JSON_OUTPUT       || '' }}
-        run: node dst-action.js
+        run: node tools/dst-action.js
 
       - name: Save DST trend artifact
         if: always()
