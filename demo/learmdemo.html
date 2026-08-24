@@ -1,609 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DST Code Demo — Before & After</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DST Lab — Same Output, Different Future</title>
+<meta name="description" content="Interactive DST / executability demo: restoration, compensation, finite resources, recipient burden, future option sets, and second-challenge testing." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0a0b0d;
-  --bg2:#111318;
-  --bg3:#1a1d24;
-  --border:#2a2d35;
-  --border2:#3a3d47;
-  --text:#e8eaf0;
-  --muted:#6b7080;
-  --dim:#9299a8;
-  --red:#ff4757;
-  --amber:#ffb830;
-  --green:#2ed573;
-  --blue:#5dade2;
-  --purple:#a78bfa;
-  --red-bg:rgba(255,71,87,.08);
-  --amber-bg:rgba(255,184,48,.08);
-  --green-bg:rgba(46,213,115,.08);
+  --bg:#080a0f; --bg2:#0e1219; --bg3:#141a24; --bg4:#1a2230;
+  --line:#263043; --line2:#34425a; --text:#eef3fb; --dim:#a9b5c7; --muted:#6f7d92;
+  --green:#4ee49a; --green2:#20b978; --blue:#72b7ff; --amber:#ffc663; --red:#ff6f7f; --purple:#b49cff;
+  --greenbg:rgba(78,228,154,.09); --bluebg:rgba(114,183,255,.09); --amberbg:rgba(255,198,99,.09); --redbg:rgba(255,111,127,.09);
+  --shadow:0 16px 50px rgba(0,0,0,.28);
 }
-body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 15% -10%,rgba(78,228,154,.08),transparent 28%),radial-gradient(circle at 85% 0%,rgba(114,183,255,.07),transparent 24%),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.55}
+a{color:inherit}
+.mono{font-family:'IBM Plex Mono',monospace}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(8,10,15,.86);backdrop-filter:blur(18px);border-bottom:1px solid rgba(52,66,90,.7)}
+.topbar .inner{height:62px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.brand{font:600 12px 'IBM Plex Mono',monospace;letter-spacing:.06em;color:var(--dim)}
+.brand b{color:var(--green)}
+.nav{display:flex;gap:18px;align-items:center;font:500 11px 'IBM Plex Mono',monospace;color:var(--muted)}
+.nav a{text-decoration:none}.nav a:hover{color:var(--text)}
+.status{display:flex;gap:8px;align-items:center;padding:6px 9px;border:1px solid rgba(78,228,154,.22);background:var(--greenbg);border-radius:999px;color:var(--green);font:500 10px 'IBM Plex Mono',monospace}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor}
+.hero{padding:92px 0 58px;text-align:center}
+.eyebrow{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:18px}
+h1{font-size:clamp(44px,7vw,76px);line-height:.98;letter-spacing:-.055em;margin:0 auto 22px;max-width:980px}
+h1 em{font-style:normal;color:var(--green)}
+.hero p{font-size:18px;color:var(--dim);max-width:800px;margin:0 auto 24px}
+.hero-note{max-width:850px;margin:24px auto 0;border:1px solid var(--line);background:linear-gradient(180deg,rgba(20,26,36,.94),rgba(14,18,25,.94));border-radius:14px;padding:17px 20px;color:var(--dim);font-size:13px;box-shadow:var(--shadow)}
+.hero-note strong{color:var(--text)}
+.pills{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:22px}
+.pill{font:500 10px 'IBM Plex Mono',monospace;padding:7px 10px;border:1px solid var(--line);border-radius:999px;color:var(--dim);background:rgba(14,18,25,.75)}
+.pill.g{color:var(--green);border-color:rgba(78,228,154,.24);background:var(--greenbg)}
+.section{padding:34px 0 76px}.section.tight{padding-bottom:44px}
+.kicker{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.11em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
+.section h2{font-size:32px;letter-spacing:-.035em;line-height:1.12;margin:0 0 9px}.lead{color:var(--dim);max-width:850px;margin:0 0 26px}
+.grid{display:grid;gap:14px}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{border:1px solid var(--line);background:linear-gradient(180deg,rgba(20,26,36,.94),rgba(14,18,25,.94));border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.18)}
+.card.pad{padding:18px}.card h3{font-size:15px;margin:0 0 7px}.card p{font-size:12.5px;color:var(--dim);margin:0}.card .small{font-size:11px;color:var(--muted)}
+.rule{margin-top:16px;border-left:2px solid var(--green);background:var(--greenbg);padding:13px 16px;color:var(--dim);font-size:13px}.rule strong{color:var(--text)}
 
-/* HEADER */
-.header{border-bottom:1px solid var(--border);padding:24px 40px;display:flex;align-items:center;justify-content:space-between}
-.logo{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted);letter-spacing:.05em}
-.logo span{color:var(--green)}
-.tagline{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+/* Lab */
+.lab{overflow:hidden}.lab-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:18px 20px;border-bottom:1px solid var(--line);background:var(--bg3)}
+.lab-title{font-weight:700}.lab-sub{font-size:11px;color:var(--muted);margin-top:3px}.lab-badge{font:600 10px 'IBM Plex Mono',monospace;color:var(--green);border:1px solid rgba(78,228,154,.25);background:var(--greenbg);padding:6px 9px;border-radius:999px;white-space:nowrap}
+.lab-body{padding:20px}.controls{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.control{padding:13px;border:1px solid var(--line);border-radius:9px;background:rgba(8,10,15,.45)}
+.control label{display:flex;justify-content:space-between;gap:12px;font:500 10px 'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px}.control output{color:var(--text)}
+input[type=range]{width:100%;accent-color:var(--green)}
+.scenario{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sys{padding:16px;border:1px solid var(--line);border-radius:10px;background:var(--bg2)}
+.sys.good{border-color:rgba(78,228,154,.24)}.sys.warn{border-color:rgba(255,198,99,.25)}
+.sys-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:13px}.sys-name{font-weight:700}.tag{font:600 9px 'IBM Plex Mono',monospace;text-transform:uppercase;padding:4px 7px;border-radius:5px}.tag.good{color:var(--green);background:var(--greenbg)}.tag.warn{color:var(--amber);background:var(--amberbg)}
+.metric{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin:10px 0 4px}.metric .label{font-size:11px;color:var(--muted)}.metric .value{font:600 12px 'IBM Plex Mono',monospace}
+.bar{height:7px;background:#202838;border-radius:999px;overflow:hidden}.fill{height:100%;border-radius:999px;transition:width .35s ease}.fill.green{background:linear-gradient(90deg,var(--green2),var(--green))}.fill.amber{background:linear-gradient(90deg,#f3a72e,var(--amber))}.fill.red{background:linear-gradient(90deg,#d94a61,var(--red))}.fill.blue{background:linear-gradient(90deg,#4b8ed3,var(--blue))}
+.options{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.option{padding:5px 7px;border-radius:5px;border:1px solid var(--line2);font:500 9px 'IBM Plex Mono',monospace;color:var(--dim)}.option.on{border-color:rgba(78,228,154,.3);color:var(--green);background:var(--greenbg)}.option.off{color:#586273;text-decoration:line-through;background:#0b0e13}
+.lab-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.btn{border:1px solid var(--line2);background:var(--bg3);color:var(--dim);padding:9px 12px;border-radius:7px;font:500 10px 'IBM Plex Mono',monospace;cursor:pointer}.btn:hover{color:var(--text);border-color:var(--green)}.btn.primary{background:var(--green);border-color:var(--green);color:#07100b;font-weight:700}.btn.danger{border-color:rgba(255,111,127,.35);color:var(--red);background:var(--redbg)}
+.result{margin-top:14px;padding:13px 15px;border:1px solid var(--line);border-radius:8px;background:#0b0e14;color:var(--dim);font-size:12px}.result strong{color:var(--text)}
 
-/* HERO */
-.hero{padding:60px 40px 40px;max-width:900px;margin:0 auto;text-align:center}
-.hero h1{font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1.2;margin-bottom:12px}
-.hero h1 em{font-style:normal;color:var(--green)}
-.hero p{font-size:15px;color:var(--dim);max-width:560px;margin:0 auto 32px}
+/* protocol */
+.protocol{counter-reset:step}.step{position:relative;padding:18px 17px 17px 52px;min-height:118px}.step:before{counter-increment:step;content:"0" counter(step);position:absolute;left:16px;top:18px;font:600 10px 'IBM Plex Mono',monospace;color:var(--green)}.step h3{font-size:14px;margin:0 0 6px}.step p{font-size:12px;color:var(--dim);margin:0}
 
-/* SCORE PILL */
-.score-row{display:flex;gap:12px;justify-content:center;margin-bottom:40px;flex-wrap:wrap}
-.score-pill{display:flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid var(--border);border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--bg2)}
-.score-pill.bad{border-color:rgba(255,71,87,.3);background:var(--red-bg)}
-.score-pill.good{border-color:rgba(46,213,115,.3);background:var(--green-bg)}
-.dot{width:8px;height:8px;border-radius:50%}
+/* evidence / experiments */
+.exp{overflow:hidden}.exp-head{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center;background:var(--bg3)}.exp-head strong{font-size:13px}.exp-state{font:600 9px 'IBM Plex Mono',monospace;padding:4px 7px;border-radius:4px}.state-null{color:var(--blue);background:var(--bluebg)}.state-signal{color:var(--green);background:var(--greenbg)}.state-open{color:var(--amber);background:var(--amberbg)}
+.exp-body{padding:15px 16px}.beforeafter{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.mini{padding:10px 11px;border:1px solid var(--line);border-radius:7px;background:#0b0e14}.mini .labell{font:600 9px 'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:5px;text-transform:uppercase}.mini p{font-size:11.5px;color:var(--dim)}
+.quote{margin-top:10px;padding:10px 12px;border-left:2px solid var(--green);background:var(--greenbg);font-size:12px;color:var(--text)}
 
-/* EXAMPLES */
-.examples{max-width:1100px;margin:0 auto;padding:0 40px 80px}
-.example{margin-bottom:64px}
-.example-header{display:flex;align-items:baseline;gap:16px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.example-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
-.example-title{font-size:18px;font-weight:600}
-.example-tag{font-size:10px;padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-weight:500}
-.tag-kappa{background:var(--red-bg);color:var(--red);border:1px solid rgba(255,71,87,.2)}
-.tag-sigma{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(255,184,48,.2)}
-.tag-rho{background:var(--green-bg);color:var(--green);border:1px solid rgba(46,213,115,.2)}
+/* execution map */
+.execmap{display:grid;grid-template-columns:1fr 130px 1fr;gap:14px;align-items:stretch}.nodecol{display:grid;gap:9px}.node{padding:13px;border:1px solid var(--line);border-radius:8px;background:var(--bg2)}.node strong{display:block;font-size:12px}.node span{font-size:10px;color:var(--muted)}.centerline{display:grid;place-items:center;position:relative}.centerline:before{content:"";position:absolute;top:12%;bottom:12%;width:1px;background:var(--line2)}.routebox{position:relative;z-index:2;padding:9px 10px;border:1px solid rgba(78,228,154,.27);background:#0b1511;border-radius:7px;color:var(--green);font:600 9px 'IBM Plex Mono',monospace;text-align:center}
+.toggle-row{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.toggle{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:var(--bg2);font:500 10px 'IBM Plex Mono',monospace;color:var(--dim);cursor:pointer}.toggle input{accent-color:var(--green)}
+.planread{margin-top:12px;font:500 11px 'IBM Plex Mono',monospace;color:var(--dim)}.planread b{color:var(--green)}
 
-/* SPLIT */
-.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:768px){.split{grid-template-columns:1fr}}
+/* trajectories */
+.timeline{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}.tstep{padding:13px;background:var(--bg2);border-right:1px solid var(--line)}.tstep:last-child{border-right:none}.tstep .t{font:600 9px 'IBM Plex Mono',monospace;color:var(--green);margin-bottom:5px}.tstep p{font-size:11px;color:var(--dim);margin:0}.tstep strong{color:var(--text)}
 
-.panel{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg2)}
-.panel-header{padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg3)}
-.panel-label{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500}
-.panel.before .panel-label{color:var(--red)}
-.panel.after .panel-label{color:var(--green)}
-.panel-score{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 8px;border-radius:3px}
-.panel.before .panel-score{background:var(--red-bg);color:var(--red)}
-.panel.after .panel-score{background:var(--green-bg);color:var(--green)}
+/* domains */
+.domain{padding:18px;position:relative;overflow:hidden}.domain:after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(78,228,154,.08),transparent 70%)}.domain .domain-k{font:600 9px 'IBM Plex Mono',monospace;text-transform:uppercase;color:var(--green);letter-spacing:.08em}.domain h3{margin:7px 0 8px;font-size:16px}.domain .q{font-size:12px;color:var(--text);margin-bottom:9px}.domain p{font-size:11.5px;color:var(--dim)}
 
-/* CODE */
-pre{padding:20px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.7;overflow-x:auto;background:transparent}
-.kappa{color:var(--red);background:rgba(255,71,87,.06);border-left:2px solid var(--red);display:block;margin:0 -20px;padding:0 20px}
-.sigma{color:var(--amber);background:rgba(255,184,48,.06);border-left:2px solid var(--amber);display:block;margin:0 -20px;padding:0 20px}
-.rho{color:var(--green)}
-.comment{color:var(--muted)}
-.keyword{color:var(--purple)}
-.string{color:var(--amber)}
-.fn{color:var(--blue)}
+/* stack */
+.stack{display:grid;grid-template-columns:repeat(7,1fr);align-items:center;gap:8px}.stackbox{padding:15px 8px;border:1px solid var(--line);border-radius:9px;text-align:center;background:var(--bg2)}.stackbox strong{display:block;font-size:11px}.stackbox span{display:block;font-size:9px;color:var(--muted);margin-top:4px}.arrow{text-align:center;color:var(--green);font:600 15px 'IBM Plex Mono',monospace}
 
-/* DIAGNOSIS */
-.diagnosis{margin-top:16px;padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:6px}
-.diag-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;font-size:12px}
-.diag-row:last-child{margin-bottom:0}
-.diag-icon{width:16px;flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:10px;padding-top:1px}
-.diag-text{color:var(--dim);line-height:1.5}
-.diag-text strong{color:var(--text);font-weight:500}
+/* prompt */
+.promptbox{overflow:hidden}.prompt-head{display:flex;justify-content:space-between;gap:12px;padding:14px 16px;background:var(--bg3);border-bottom:1px solid var(--line)}pre{margin:0;white-space:pre-wrap}.prompt{padding:18px;font:400 11px/1.72 'IBM Plex Mono',monospace;color:#c6d0df;background:#090c11;max-height:560px;overflow:auto}.accent{color:var(--green)}.warntext{color:var(--amber)}
 
-/* DELTA */
-.delta{margin-top:16px;display:flex;gap:12px;align-items:center;padding:12px 16px;border:1px solid var(--border2);border-radius:6px;background:var(--bg3)}
-.delta-arrow{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--green)}
-.delta-text{font-size:12px;color:var(--dim)}
-.delta-text strong{color:var(--green)}
+.footer{border-top:1px solid var(--line);padding:24px 0 34px;color:var(--muted);font:500 10px 'IBM Plex Mono',monospace}.footer .frow{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
-/* EQUATION BAR */
-.eq-bar{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px 20px;margin-bottom:32px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);text-align:center}
-.eq-bar span{color:var(--text)}
-
-/* TRAINING SECTION */
-.training{max-width:900px;margin:0 auto;padding:0 40px 80px}
-.training-box{border:1px solid var(--border2);border-radius:8px;overflow:hidden}
-.training-header{padding:16px 20px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
-.training-title{font-size:15px;font-weight:600}
-.training-sub{font-size:11px;color:var(--muted);margin-left:auto;font-family:'IBM Plex Mono',monospace}
-.training-body{padding:20px}
-.training-body p{font-size:13px;color:var(--dim);margin-bottom:16px;line-height:1.6}
-pre.prompt{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:16px 20px;font-size:12px;line-height:1.8;color:var(--dim);overflow-x:auto}
-pre.prompt .ph{color:var(--green)}
-pre.prompt .rule{color:var(--text)}
-pre.prompt .cmnt{color:var(--muted)}
-.copy-btn{margin-top:12px;padding:8px 20px;background:transparent;border:1px solid var(--border2);border-radius:4px;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s}
-.copy-btn:hover{border-color:var(--green);color:var(--green)}
-
-/* FOOTER */
-.footer{border-top:1px solid var(--border);padding:20px 40px;display:flex;align-items:center;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
-.footer a{color:var(--dim);text-decoration:none}
-.footer a:hover{color:var(--green)}
+@media(max-width:900px){.grid.four,.grid.three{grid-template-columns:1fr 1fr}.controls{grid-template-columns:1fr}.execmap{grid-template-columns:1fr}.centerline:before{display:none}.stack{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}.timeline{grid-template-columns:1fr}.tstep{border-right:none;border-bottom:1px solid var(--line)}.tstep:last-child{border-bottom:none}}
+@media(max-width:680px){.wrap{padding:0 18px}.nav{display:none}.hero{padding:66px 0 42px}.hero p{font-size:16px}.section h2{font-size:27px}.grid.two,.grid.three,.grid.four,.scenario,.beforeafter{grid-template-columns:1fr}.lab-head{flex-direction:column}.status{display:none}}
 </style>
 </head>
 <body>
+<div class="topbar"><div class="wrap inner">
+  <div class="brand">DST<b>/</b>lab <span style="color:var(--muted)">v3</span></div>
+  <nav class="nav"><a href="#lab">Live lab</a><a href="#method">Method</a><a href="#evidence">Evidence</a><a href="#options">Executability</a><a href="#domains">Beyond code</a><a href="#stack">Build stack</a></nav>
+  <div class="status"><span class="dot"></span> research prototype</div>
+</div></div>
 
-<div class="header">
-  <div class="logo">DST<span>/</span>demo</div>
-  <div class="tagline">ρ heals · κ hides · σ kills</div>
-</div>
+<main>
+<section class="hero"><div class="wrap">
+  <div class="eyebrow">Declining Stress Threshold · executability demo</div>
+  <h1>Same output.<br><em>Different future.</em></h1>
+  <p>Do not ask only whether the system works. Ask <strong>what is making it work</strong>, what that mechanism consumes or transfers, and whether the system would still work after the support is removed or the next challenge arrives.</p>
+  <div class="hero-note"><strong>No fake health score.</strong> This demo keeps observables, latent state, requirements, restoration, compensation, recipient burden and future options separate. If the evidence does not identify the underlying state, the correct answer is <span class="mono" style="color:var(--amber)">UNRESOLVED</span>.</div>
+  <div class="pills"><span class="pill g">effect, not label</span><span class="pill g">AND inside plans</span><span class="pill g">OR between plans</span><span class="pill g">TF ≠ TO</span><span class="pill g">second challenge</span><span class="pill g">future option set</span></div>
+</div></section>
 
-<div class="hero">
-  <h1>The same code.<br><em>Completely different trajectory.</em></h1>
-  <p>DST doesn't make code prettier. It makes the invisible visible — and shows exactly what each pattern costs your system's future capacity.</p>
-  <div class="score-row">
-    <div class="score-pill bad"><div class="dot" style="background:var(--red)"></div>Before DST — Θ declining</div>
-    <div class="score-pill good"><div class="dot" style="background:var(--green)"></div>After DST — dΘ/dt &gt; 0</div>
-  </div>
-</div>
-
-<div class="examples">
-
-  <div class="eq-bar">
-    dΘ/dt = <span>ρ</span> − σ_eff &nbsp;·&nbsp; σ_eff = σ − (κ_a + κ_c + κ_i) &nbsp;·&nbsp; <span>Θ → 0</span> = system in delayed failure
-  </div>
-
-  <!-- EXAMPLE 1 -->
-  <div class="example">
-    <div class="example-header">
-      <span class="example-num">01</span>
-      <span class="example-title">Error handling — the silent killer</span>
-      <span class="example-tag tag-kappa">κ_a accumulated</span>
-    </div>
-    <div class="split">
-      <div class="panel before">
-        <div class="panel-header">
-          <span class="panel-label">BEFORE — κ_a dominant</span>
-          <span class="panel-score">Θ = 31/100</span>
-        </div>
-        <pre><code><span class="keyword">async function</span> <span class="fn">processPayment</span>(userId, amount) {
-  <span class="keyword">try</span> {
-    <span class="keyword">const</span> result = <span class="keyword">await</span> chargeAPI(userId, amount);
-    <span class="keyword">return</span> result;
-  } <span class="keyword">catch</span> (err) {
-<span class="kappa">    console.error(err);                    <span class="comment">// κ_a</span>
-    <span class="keyword">return</span> { success: <span class="keyword">false</span>,             <span class="comment">// κ_a</span>
-              error: <span class="string">'Payment failed'</span> };  <span class="comment">// gap created</span>
-</span>  }
-}</code></pre>
+<section class="section" id="lab"><div class="wrap">
+  <div class="kicker">live experiment</div><h2>Hold the observable constant. Change what is underneath.</h2>
+  <p class="lead">Both systems below report the same user-visible success. One actually removes impairment. The other keeps success flat by spending compensation capacity. Change the environment, then apply a second challenge.</p>
+  <div class="card lab">
+    <div class="lab-head"><div><div class="lab-title">Twin-system trajectory test</div><div class="lab-sub mono">same y · different mechanism · different future</div></div><div class="lab-badge">interactive</div></div>
+    <div class="lab-body">
+      <div class="controls">
+        <div class="control"><label><span>visible success y</span><output id="outY">99%</output></label><input id="yRange" type="range" min="92" max="100" value="99" step="1"></div>
+        <div class="control"><label><span>hidden dependency pressure</span><output id="outPressure">55</output></label><input id="pressureRange" type="range" min="10" max="100" value="55" step="5"></div>
+        <div class="control"><label><span>time under workaround</span><output id="outTime">3 periods</output></label><input id="timeRange" type="range" min="0" max="8" value="3" step="1"></div>
       </div>
-      <div class="panel after">
-        <div class="panel-header">
-          <span class="panel-label">AFTER — ρ healing</span>
-          <span class="panel-score">Θ = 89/100</span>
+      <div class="scenario">
+        <div class="sys good">
+          <div class="sys-top"><div class="sys-name">System A — restoration path</div><span class="tag good">root mechanism reduced</span></div>
+          <div class="metric"><span class="label">Visible success</span><span class="value" id="aY">99%</span></div><div class="bar"><div class="fill green" id="aYBar" style="width:99%"></div></div>
+          <div class="metric"><span class="label">Persistent impairment</span><span class="value" id="aD">22</span></div><div class="bar"><div class="fill blue" id="aDBar" style="width:22%"></div></div>
+          <div class="metric"><span class="label">Compensation stock remaining</span><span class="value" id="aK">92</span></div><div class="bar"><div class="fill green" id="aKBar" style="width:92%"></div></div>
+          <div class="metric"><span class="label">Future executable options</span><span class="value" id="aOpts">5 / 5</span></div>
+          <div class="options" id="aOptionPills"></div>
         </div>
-        <pre><code><span class="keyword">async function</span> <span class="fn">processPayment</span>(userId, amount) {
-  <span class="keyword">const</span> result = <span class="keyword">await</span> chargeAPI(userId, amount);
-
-  <span class="keyword">if</span> (!result.ok) {
-<span class="rho">    logger.error(<span class="string">'Payment failed'</span>, {   <span class="comment">// ρ</span>
-      userId, amount,
-      code: result.errorCode,
-      context: <span class="string">'checkout_flow'</span>
-    });
-    <span class="keyword">throw new</span> <span class="fn">PaymentError</span>(             <span class="comment">// ρ</span>
-      result.errorCode, { userId }
-    );
-</span>  }
-  <span class="keyword">return</span> result.data;
-}</code></pre>
+        <div class="sys warn">
+          <div class="sys-top"><div class="sys-name">System B — continuity path</div><span class="tag warn">observable preserved</span></div>
+          <div class="metric"><span class="label">Visible success</span><span class="value" id="bY">99%</span></div><div class="bar"><div class="fill green" id="bYBar" style="width:99%"></div></div>
+          <div class="metric"><span class="label">Persistent impairment</span><span class="value" id="bD">55</span></div><div class="bar"><div class="fill amber" id="bDBar" style="width:55%"></div></div>
+          <div class="metric"><span class="label">Compensation stock remaining</span><span class="value" id="bK">55</span></div><div class="bar"><div class="fill amber" id="bKBar" style="width:55%"></div></div>
+          <div class="metric"><span class="label">Future executable options</span><span class="value" id="bOpts">3 / 5</span></div>
+          <div class="options" id="bOptionPills"></div>
+        </div>
       </div>
-    </div>
-    <div class="diagnosis">
-      <div class="diag-row"><span class="diag-icon" style="color:var(--red)">κ_a</span><span class="diag-text"><strong>Silent catch</strong> — error disappears. Every caller inherits hidden fragility. Observability gap opens. Future debugging cost: 6hrs/incident × 12mo = compounding.</span></div>
-      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>Explicit throw</strong> — failure surfaces immediately. Structured log gives traceable context. Every caller gets a contract: success or typed exception. Gap closed.</span></div>
-    </div>
-    <div class="delta">
-      <span class="delta-arrow">↑</span>
-      <span class="delta-text">Θ: 31 → 89 &nbsp;·&nbsp; <strong>+58 pts</strong> &nbsp;·&nbsp; dΘ/dt flips from negative to positive &nbsp;·&nbsp; every future feature built on this function is now structurally cheaper</span>
+      <div class="lab-actions"><button class="btn primary" id="challengeBtn">apply second challenge</button><button class="btn" id="removeBtn">remove fallback</button><button class="btn" id="resetBtn">reset</button></div>
+      <div class="result" id="labResult"><strong>Snapshot:</strong> both systems look equally successful. The present observable alone does not identify which trajectory is safer.</div>
     </div>
   </div>
+</div></section>
 
-  <!-- EXAMPLE 2 -->
-  <div class="example">
-    <div class="example-header">
-      <span class="example-num">02</span>
-      <span class="example-title">State management — the invisible mutation</span>
-      <span class="example-tag tag-kappa">κ_a accumulated</span>
-    </div>
-    <div class="split">
-      <div class="panel before">
-        <div class="panel-header">
-          <span class="panel-label">BEFORE — κ_a dominant</span>
-          <span class="panel-score">Θ = 28/100</span>
-        </div>
-        <pre><code><span class="keyword">let</span> cart = { items: [], total: 0 };
-
-<span class="keyword">function</span> <span class="fn">addToCart</span>(product) {
-<span class="kappa">  cart.items.push(product);         <span class="comment">// κ_a mutation</span>
-  cart.total += product.price;      <span class="comment">// κ_a mutation</span>
-</span>  saveCartToLocalStorage(cart);
-  <span class="keyword">return</span> cart;   <span class="comment">// same mutated object</span>
-}
-
-<span class="comment">// caller has no idea cart changed
-// testing requires recreating global state
-// concurrency = silent corruption</span></code></pre>
-      </div>
-      <div class="panel after">
-        <div class="panel-header">
-          <span class="panel-label">AFTER — ρ healing</span>
-          <span class="panel-score">Θ = 92/100</span>
-        </div>
-        <pre><code><span class="keyword">function</span> <span class="fn">addToCart</span>(currentCart, product) {
-<span class="rho">  <span class="keyword">const</span> newCart = {              <span class="comment">// ρ new object</span>
-    ...currentCart,
-    items: [...currentCart.items,
-             product],
-    total: currentCart.total
-           + product.price
-  };
-</span>  saveCartToLocalStorage(newCart);
-  <span class="keyword">return</span> newCart;  <span class="comment">// explicit, predictable</span>
-}
-
-<span class="comment">// pure function — testable in isolation
-// callers see exactly what changed
-// no global state to manage</span></code></pre>
-      </div>
-    </div>
-    <div class="diagnosis">
-      <div class="diag-row"><span class="diag-icon" style="color:var(--red)">κ_a</span><span class="diag-text"><strong>Implicit state mutation</strong> — callers cannot predict side effects. Every function that touches cart must know its history. Hidden coupling that kills Θ across the entire call graph.</span></div>
-      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>Pure function</strong> — input in, new output out. Testable in isolation. Predictable. Every future caller gets a clear contract. dΘ/dt becomes positive for all downstream code.</span></div>
-    </div>
-    <div class="delta">
-      <span class="delta-arrow">↑</span>
-      <span class="delta-text">Θ: 28 → 92 &nbsp;·&nbsp; <strong>+64 pts</strong> &nbsp;·&nbsp; 60 lines of global-state management eliminated &nbsp;·&nbsp; function became 12 lines and fully testable</span>
-    </div>
+<section class="section tight" id="method"><div class="wrap">
+  <div class="kicker">method</div><h2>Seven questions before you call something a fix.</h2>
+  <p class="lead">The point is not to label patterns “good” or “bad.” The point is to earn the classification from evidence.</p>
+  <div class="grid four protocol">
+    <div class="card step"><h3>Observable</h3><p>What looks successful or broken right now? Tests, latency, scan, dashboard, phenotype, price?</p></div>
+    <div class="card step"><h3>Requirement + authority</h3><p>What must actually be true, and which state is authoritative? A proxy is not the requirement.</p></div>
+    <div class="card step"><h3>Persistent impairment</h3><p>What remains wrong even if the observable looks normal? If you cannot name it, say unresolved.</p></div>
+    <div class="card step"><h3>Effect vector</h3><p>Did the intervention repair impairment, reduce incoming burden, create capacity, change the requirement, or compensate?</p></div>
+    <div class="card step"><h3>Recipient + finite stock</h3><p>If burden moved, who receives it? If compensation is finite, name the stock and its bound.</p></div>
+    <div class="card step"><h3>Joint executability</h3><p>Every required condition must hold inside one plan; alternative complete plans compete between plans.</p></div>
+    <div class="card step"><h3>Second challenge + uncertainty</h3><p>Remove support or perturb again. If evidence still cannot identify the state, report UNRESOLVED.</p></div>
+    <div class="card step"><h3>Future options</h3><p>Ask not only whether today works, but which complete future responses remain executable afterward.</p></div>
   </div>
+  <div class="rule"><strong>Core firewall:</strong> a retry is not automatically displacement, a refactor is not automatically restoration, a protein is not automatically repair, and a drug is not automatically masking. <strong>Classify by measured state effect.</strong></div>
+</div></section>
 
-  <!-- EXAMPLE 3 -->
-  <div class="example">
-    <div class="example-header">
-      <span class="example-num">03</span>
-      <span class="example-title">Data fetching — the silent σ bomb</span>
-      <span class="example-tag tag-sigma">σ amplifier</span>
-    </div>
-    <div class="split">
-      <div class="panel before">
-        <div class="panel-header">
-          <span class="panel-label">BEFORE — σ amplifier</span>
-          <span class="panel-score">Θ = 12/100</span>
-        </div>
-        <pre><code><span class="keyword">async function</span> <span class="fn">loadUserProfiles</span>(userIds) {
-  <span class="keyword">const</span> profiles = [];
-<span class="sigma">  <span class="keyword">for</span> (<span class="keyword">const</span> id <span class="keyword">of</span> userIds) {      <span class="comment">// σ N+1</span>
-    <span class="keyword">const</span> p = <span class="keyword">await</span> fetch(          <span class="comment">// σ scales</span>
-      <span class="string">`/api/users/${id}`</span>            <span class="comment">// with data</span>
-    );
-    profiles.push(p);
-  }
-</span>  <span class="keyword">return</span> profiles;
-}
-
-<span class="comment">// 5 users:   5 requests  ← fine
-// 500 users: 500 requests ← database dies
-// same code, catastrophic at scale</span></code></pre>
-      </div>
-      <div class="panel after">
-        <div class="panel-header">
-          <span class="panel-label">AFTER — σ resolved</span>
-          <span class="panel-score">Θ = 94/100</span>
-        </div>
-        <pre><code><span class="keyword">async function</span> <span class="fn">loadUserProfiles</span>(userIds) {
-<span class="rho">  <span class="keyword">if</span> (userIds.length === 0)         <span class="comment">// ρ guard</span>
-    <span class="keyword">return</span> [];
-
-  <span class="keyword">const</span> response = <span class="keyword">await</span> fetch(    <span class="comment">// ρ single</span>
-    <span class="string">'/api/users/batch'</span>, {           <span class="comment">// request</span>
-    method: <span class="string">'POST'</span>,
-    body: JSON.stringify({ ids: userIds })
-  });
-
-  <span class="keyword">if</span> (!response.ok)
-    <span class="keyword">throw new</span> <span class="fn">UserFetchError</span>(       <span class="comment">// ρ explicit</span>
-      { count: userIds.length }
-    );
-</span>  <span class="keyword">return</span> response.json();
-}</code></pre>
-      </div>
-    </div>
-    <div class="diagnosis">
-      <div class="diag-row"><span class="diag-icon" style="color:var(--amber)">σ</span><span class="diag-text"><strong>N+1 amplifier</strong> — stress scales with data size. Same code that works with 5 users catastrophically fails at 500. This is σ: the same pattern gets worse as load grows.</span></div>
-      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>Batch request</strong> — O(1) requests regardless of input size. Error handling explicit. Θ stays constant as data scales 100×. σ_eff → 0.</span></div>
-    </div>
-    <div class="delta">
-      <span class="delta-arrow">↑</span>
-      <span class="delta-text">Θ: 12 → 94 &nbsp;·&nbsp; <strong>+82 pts</strong> &nbsp;·&nbsp; σ amplifier eliminated &nbsp;·&nbsp; scales to 100× users with zero code change</span>
-    </div>
+<section class="section" id="evidence"><div class="wrap">
+  <div class="kicker">what the tests actually showed</div><h2>Mixed results are the point.</h2>
+  <p class="lead">A serious DST benchmark needs wins, null results, over-classification failures and unresolved cases. Otherwise the framework can never lose.</p>
+  <div class="grid two">
+    <div class="card exp"><div class="exp-head"><strong>Inventory oversell</strong><span class="exp-state state-null">ceiling-limited</span></div><div class="exp-body"><p>Baseline and DST-aware models both found the canonical atomic PostgreSQL update. The final fix was effectively tied.</p><div class="beforeafter"><div class="mini"><div class="labell">baseline</div><p>Correct atomic conditional update + transaction.</p></div><div class="mini"><div class="labell">DST added</div><p>Why the invariant belongs at the authoritative resource boundary rather than another load-bearing application lock.</p></div></div><div class="quote">Result: representation shift, not better coding performance.</div></div></div>
+    <div class="card exp"><div class="exp-head"><strong>Lagging search / paid invoice</strong><span class="exp-state state-signal">useful signal</span></div><div class="exp-body"><p>The key distinction became source-of-truth versus delayed observable. The stronger design used state provenance/versioning instead of merely making the UI look current.</p><div class="beforeafter"><div class="mini"><div class="labell">temptation</div><p>Optimistically overwrite the visible state.</p></div><div class="mini"><div class="labell">stronger reasoning</div><p>Reject stale derived state when it conflicts with a newer authoritative version.</p></div></div><div class="quote">Result: visible success was separated from authoritative reality.</div></div></div>
+    <div class="card exp"><div class="exp-head"><strong>Fresh-model before / after engine</strong><span class="exp-state state-signal">strongest pair</span></div><div class="exp-body"><p>A strong blind model already knew concurrency, overload and hidden invariants. After the engine it explicitly separated “still operating” from “failure repaired,” and derived that delay can change the repair target itself.</p><div class="quote">“The system being repaired later can be structurally different from the system that originally failed.”</div></div></div>
+    <div class="card exp"><div class="exp-head"><strong>Gemini over-classification</strong><span class="exp-state state-open">important failure</span></div><div class="exp-body"><p>Exposure expanded structural reasoning but sometimes caused the model to call locks, caches and retries “displacement” from their names alone.</p><div class="quote">Result: DST needs specificity, counterfactual testing and an explicit UNRESOLVED state.</div></div></div>
   </div>
+</div></section>
 
-</div>
-
-
-  <!-- EXAMPLE 4 -->
-  <div class="example">
-    <div class="example-header">
-      <span class="example-num">04</span>
-      <span class="example-title">React hooks — the dependency lie</span>
-      <span class="example-tag tag-kappa">κ_a accumulated</span>
-    </div>
-    <div class="split">
-      <div class="panel before">
-        <div class="panel-header">
-          <span class="panel-label">BEFORE — κ_a dominant</span>
-          <span class="panel-score">Θ = 18/100</span>
-        </div>
-        <pre><code><span class="keyword">function</span> <span class="fn">UserProfile</span>({ userId }) {
-  <span class="keyword">const</span> [user, setUser] = useState(<span class="keyword">null</span>);
-
-  useEffect(() => {
-<span class="kappa">    fetchUser(userId).then(setUser); <span class="comment">// κ_a</span>
-  }, []); <span class="comment">// κ_a: empty array LIES</span>
-          <span class="comment">// userId changes → stale data</span>
-          <span class="comment">// fetch fails → silence</span>
-          <span class="comment">// unmount mid-fetch → memory leak</span>
-</span>
-  <span class="keyword">return</span> &lt;Profile user={user} /&gt;;
-  <span class="comment">// user=null on first render → crash</span>
-}</code></pre>
+<section class="section" id="options"><div class="wrap">
+  <div class="kicker">executability kernel</div><h2>A resource is not a plan.</h2>
+  <p class="lead">The engine's useful move is simple: a future exists only when all required pieces can be executed together before their deadlines. Individual availability is not enough.</p>
+  <div class="card pad">
+    <div class="execmap">
+      <div class="nodecol">
+        <div class="node"><strong>Burden A</strong><span>must discharge before Δ1</span></div>
+        <div class="node"><strong>Burden B</strong><span>must discharge before Δ2</span></div>
+        <div class="node"><strong>Shared resource K</strong><span id="kNode">stock 7 · rate 5</span></div>
       </div>
-      <div class="panel after">
-        <div class="panel-header">
-          <span class="panel-label">AFTER — ρ healing</span>
-          <span class="panel-score">Θ = 85/100</span>
-        </div>
-        <pre><code><span class="keyword">function</span> <span class="fn">UserProfile</span>({ userId }) {
-  <span class="keyword">const</span> [user, setUser] = useState(<span class="keyword">null</span>);
-  <span class="keyword">const</span> [loading, setLoading] = useState(<span class="keyword">false</span>);
-  <span class="keyword">const</span> [error, setError] = useState(<span class="keyword">null</span>);
-
-  useEffect(() => {
-    <span class="keyword">if</span> (!userId) <span class="keyword">return</span>;
-<span class="rho">    <span class="keyword">let</span> cancelled = <span class="keyword">false</span>; <span class="comment">// ρ: cleanup flag</span>
-    setLoading(<span class="keyword">true</span>);
-    fetchUser(userId)
-      .then(d  => { <span class="keyword">if</span> (!cancelled) setUser(d); })
-      .catch(e  => { <span class="keyword">if</span> (!cancelled) setError(e); })
-      .finally(() => { <span class="keyword">if</span> (!cancelled) setLoading(<span class="keyword">false</span>); });
-    <span class="keyword">return</span> () => { cancelled = <span class="keyword">true</span>; }; <span class="comment">// ρ: cleanup</span>
-  }, [userId]); <span class="comment">// ρ: honest dependencies</span>
-</span>
-  <span class="keyword">if</span> (loading) <span class="keyword">return</span> &lt;Spinner /&gt;;
-  <span class="keyword">if</span> (error)   <span class="keyword">return</span> &lt;ErrorView error={error} /&gt;;
-  <span class="keyword">return</span> &lt;Profile user={user} /&gt;;
-}</code></pre>
+      <div class="centerline"><div class="routebox">routes + access<br>AND inside plan</div></div>
+      <div class="nodecol">
+        <div class="node"><strong>Recipient R1</strong><span>capacity 6</span></div>
+        <div class="node"><strong>Recipient R2</strong><span>capacity 4</span></div>
+        <div class="node"><strong>Boundary fallback</strong><span>finite external support</span></div>
       </div>
     </div>
-    <div class="diagnosis">
-      <div class="diag-row"><span class="diag-icon" style="color:var(--red)">κ_a</span><span class="diag-text"><strong>Empty dependency array</strong> — lies about what the effect depends on. userId changes, component shows stale user. Works in every demo. Fails in every production app with navigation.</span></div>
-      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>Honest deps + cleanup flag</strong> — effect re-runs when userId changes. Cancelled flag prevents stale state on fast navigation. Error state surfaces failure explicitly. Three gaps closed at once.</span></div>
+    <div class="toggle-row">
+      <label class="toggle"><input id="routeToggle" type="checkbox" checked> route R2 accessible</label>
+      <label class="toggle"><input id="recipientToggle" type="checkbox" checked> recipient R1 has headroom</label>
+      <label class="toggle"><input id="resourceToggle" type="checkbox" checked> shared K available</label>
+      <label class="toggle"><input id="fallbackToggle" type="checkbox" checked> fallback available</label>
     </div>
-    <div class="delta">
-      <span class="delta-arrow">↑</span>
-      <span class="delta-text">Θ: 18 → 85 &nbsp;·&nbsp; <strong>+67 pts</strong> &nbsp;·&nbsp; three κ_a patterns stacked: dependency lie + missing cleanup + silent catch — all eliminated together</span>
-    </div>
+    <div class="planread" id="planRead">Executable plans: <b>P1 · P2 · P3</b></div>
   </div>
+  <div class="rule"><strong>AND inside a plan, OR between plans.</strong> Losing one route may be harmless if another complete plan remains. Losing one shared resource can simultaneously destroy several apparently independent options.</div>
+</div></section>
 
-  <!-- EXAMPLE 5 -->
-  <div class="example">
-    <div class="example-header">
-      <span class="example-num">05</span>
-      <span class="example-title">Caching — the σ disguised as optimization</span>
-      <span class="example-tag tag-sigma">σ + κ_a</span>
-    </div>
-    <div class="split">
-      <div class="panel before">
-        <div class="panel-header">
-          <span class="panel-label">BEFORE — σ + κ_a</span>
-          <span class="panel-score">Θ = 8/100</span>
-        </div>
-        <pre><code><span class="keyword">const</span> userCache = {}; <span class="comment">// σ: grows forever</span>
-
-<span class="keyword">async function</span> <span class="fn">getUser</span>(userId) {
-  <span class="keyword">if</span> (userCache[userId]) {
-<span class="kappa">    <span class="keyword">return</span> userCache[userId]; <span class="comment">// κ_a: stale data</span>
-    <span class="comment">// deleted user? still here</span>
-    <span class="comment">// updated name? old name shown</span>
-    <span class="comment">// no TTL, no invalidation</span>
-</span>  }
-<span class="sigma">  <span class="keyword">const</span> user = <span class="keyword">await</span> fetchUser(userId);
-  userCache[userId] = user; <span class="comment">// σ: permanent entry</span>
-</span>  <span class="keyword">return</span> user;
-}
-<span class="comment">// month 1:  200 entries, fine
-// month 6:  50,000 entries
-// memory climbs, no one knows why</span></code></pre>
-      </div>
-      <div class="panel after">
-        <div class="panel-header">
-          <span class="panel-label">AFTER — σ resolved + ρ</span>
-          <span class="panel-score">Θ = 91/100</span>
-        </div>
-        <pre><code><span class="keyword">import</span> LRU <span class="keyword">from</span> <span class="string">'lru-cache'</span>;
-
-<span class="rho"><span class="keyword">const</span> userCache = <span class="keyword">new</span> LRU({
-  max: 500,              <span class="comment">// ρ: bounded forever</span>
-  ttl: 5 * 60_000,      <span class="comment">// ρ: 5min max stale</span>
-});
-</span>
-<span class="keyword">async function</span> <span class="fn">getUser</span>(userId) {
-  <span class="keyword">const</span> cached = userCache.get(userId);
-  <span class="keyword">if</span> (cached) <span class="keyword">return</span> cached;
-
-  <span class="keyword">const</span> user = <span class="keyword">await</span> fetchUser(userId);
-  userCache.set(userId, user);
-  <span class="keyword">return</span> user;
-}
-<span class="rho">
-<span class="keyword">function</span> <span class="fn">invalidateUser</span>(userId) {
-  userCache.delete(userId); <span class="comment">// ρ: explicit path</span>
-}
-</span>
-<span class="comment">// month 1:  max 500 entries
-// month 6:  still max 500 entries
-// memory stable, data fresh</span></code></pre>
-      </div>
-    </div>
-    <div class="diagnosis">
-      <div class="diag-row"><span class="diag-icon" style="color:var(--amber)">σ+κ_a</span><span class="diag-text"><strong>Unbounded cache + stale data</strong> — the worst combination. σ grows memory proportionally to unique users forever. κ_a returns wrong data silently. Both feel like features ("it's fast!") while structurally degrading the system.</span></div>
-      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>LRU + TTL + invalidation</strong> — memory bounded permanently. Data freshness guaranteed by TTL. Explicit invalidation path for immediate updates. Three structural guarantees in 4 lines.</span></div>
-    </div>
-    <div class="delta">
-      <span class="delta-arrow">↑</span>
-      <span class="delta-text">Θ: 8 → 91 &nbsp;·&nbsp; <strong>+83 pts</strong> &nbsp;·&nbsp; lowest starting score of all 6 examples — σ+κ_a together is the most structurally damaging combination in any codebase</span>
-    </div>
+<section class="section"><div class="wrap">
+  <div class="kicker">time</div><h2>The interval can change the thing that later needs repair.</h2>
+  <p class="lead">Functional failure and operational termination are different clocks. The interval between them can be productive or destructive depending on what gets built inside it.</p>
+  <div class="timeline">
+    <div class="tstep"><div class="t">T_F</div><p><strong>Required function is lost.</strong> A fallback keeps operation alive.</p></div>
+    <div class="tstep"><div class="t">+1</div><p>New callers and automation begin depending on the fallback.</p></div>
+    <div class="tstep"><div class="t">+2</div><p>State, contracts and operational assumptions accumulate around it.</p></div>
+    <div class="tstep"><div class="t">+3</div><p>The workaround becomes endogenous infrastructure rather than temporary support.</p></div>
+    <div class="tstep"><div class="t">T_O / transition</div><p><strong>Repair target has changed.</strong> Fix + migration + obligation preservation are now jointly required.</p></div>
   </div>
-
-  <!-- EXAMPLE 6 -->
-  <div class="example">
-    <div class="example-header">
-      <span class="example-num">06</span>
-      <span class="example-title">Async flows — three sins, one function</span>
-      <span class="example-tag tag-sigma">σ + κ_a</span>
-    </div>
-    <div class="split">
-      <div class="panel before">
-        <div class="panel-header">
-          <span class="panel-label">BEFORE — σ + κ_a</span>
-          <span class="panel-score">Θ = 22/100</span>
-        </div>
-        <pre><code><span class="keyword">async function</span> <span class="fn">initDashboard</span>(userId) {
-
-<span class="kappa">  logAnalytics(<span class="string">'opened'</span>, userId); <span class="comment">// κ_a: fire-forget</span>
-  <span class="comment">// failure: invisible</span>
-</span>
-<span class="sigma">  <span class="keyword">const</span> user   = <span class="keyword">await</span> fetchUser(userId);  <span class="comment">// σ</span>
-  <span class="keyword">const</span> prefs  = <span class="keyword">await</span> fetchPrefs(userId); <span class="comment">// σ waits</span>
-  <span class="keyword">const</span> notifs = <span class="keyword">await</span> fetchNotifs(userId);<span class="comment">// σ waits</span>
-  <span class="comment">// total: 600ms — sequential, independent</span>
-  <span class="comment">// add 1 more call: +200ms forever</span>
-</span>
-<span class="kappa">  <span class="keyword">const</span> data = <span class="keyword">await</span> fetchData(userId); <span class="comment">// κ_a</span>
-  <span class="comment">// no timeout — hangs forever</span>
-  <span class="comment">// UI spins indefinitely on failure</span>
-</span>
-  <span class="keyword">return</span> { user, prefs, notifs, data };
-}</code></pre>
-      </div>
-      <div class="panel after">
-        <div class="panel-header">
-          <span class="panel-label">AFTER — σ + κ_a resolved</span>
-          <span class="panel-score">Θ = 88/100</span>
-        </div>
-        <pre><code><span class="keyword">async function</span> <span class="fn">initDashboard</span>(userId) {
-
-<span class="rho">  logAnalytics(<span class="string">'opened'</span>, userId)   <span class="comment">// ρ: handled</span>
-    .catch(e => logger.warn(<span class="string">'analytics'</span>, e));
-</span>
-<span class="rho">  <span class="keyword">const</span> [user, prefs, notifs] =    <span class="comment">// ρ: parallel</span>
-    <span class="keyword">await</span> Promise.all([             <span class="comment">// 200ms total</span>
-      fetchUser(userId),            <span class="comment">// not 600ms</span>
-      fetchPrefs(userId),
-      fetchNotifs(userId),
-    ]);
-</span>
-<span class="rho">  <span class="keyword">const</span> data = <span class="keyword">await</span> Promise.race([ <span class="comment">// ρ: bounded</span>
-    fetchData(userId),
-    <span class="keyword">new</span> Promise((_,r) =>
-      setTimeout(() => r(
-        <span class="keyword">new</span> <span class="fn">TimeoutError</span>({ ms: 3000 })
-      ), 3000)
-    )
-  ]);
-</span>
-  <span class="keyword">return</span> { user, prefs, notifs, data };
-}</code></pre>
-      </div>
-    </div>
-    <div class="diagnosis">
-      <div class="diag-row"><span class="diag-icon" style="color:var(--amber)">σ+κ_a</span><span class="diag-text"><strong>Sequential + fire-forget + no timeout</strong> — 600ms that grows with every added call. Analytics failures invisible. Dashboard can hang for minutes. Three completely separate structural problems in 15 lines.</span></div>
-      <div class="diag-row"><span class="diag-icon" style="color:var(--green)">ρ</span><span class="diag-text"><strong>Promise.all + .catch + Promise.race</strong> — 200ms regardless of call count. Analytics handled without blocking. 3 second ceiling on data fetch. σ eliminated, both κ_a gaps closed. Same data, 3× faster, bounded failure.</span></div>
-    </div>
-    <div class="delta">
-      <span class="delta-arrow">↑</span>
-      <span class="delta-text">Θ: 22 → 88 &nbsp;·&nbsp; <strong>+66 pts</strong> &nbsp;·&nbsp; Promise.all alone = 3× faster &nbsp;·&nbsp; timeout adds 4 lines and eliminates infinite hang &nbsp;·&nbsp; .catch adds 1 line and closes analytics gap</span>
-    </div>
+  <div class="grid two" style="margin-top:14px">
+    <div class="card pad"><h3 style="color:var(--green)">Productive purchased time</h3><p>Fallback buys an interval that is converted into repair, capacity creation, requirement reduction or an orderly structural transition.</p></div>
+    <div class="card pad"><h3 style="color:var(--amber)">Compounding purchased time</h3><p>Fallback buys an interval in which more dependencies, liabilities or adaptation accumulate around the unresolved state, contracting future options.</p></div>
   </div>
+</div></section>
 
-  <!-- SUMMARY TABLE -->
-  <div style="margin-bottom:48px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
-    <div style="padding:12px 20px;background:var(--bg3);border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)">pattern summary — all 6 examples</div>
-    <table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12px">
-      <thead><tr style="border-bottom:1px solid var(--border)">
-        <th style="padding:10px 16px;text-align:left;color:var(--muted);font-weight:500">#</th>
-        <th style="padding:10px 16px;text-align:left;color:var(--muted);font-weight:500">pattern</th>
-        <th style="padding:10px 16px;text-align:left;color:var(--muted);font-weight:500">type</th>
-        <th style="padding:10px 16px;text-align:right;color:var(--muted);font-weight:500">before</th>
-        <th style="padding:10px 16px;text-align:right;color:var(--muted);font-weight:500">after</th>
-        <th style="padding:10px 16px;text-align:right;color:var(--muted);font-weight:500">Δ</th>
-      </tr></thead>
-      <tbody>
-        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 16px;color:var(--muted)">01</td><td style="padding:8px 16px;color:var(--text)">silent catch</td><td style="padding:8px 16px;color:var(--red)">κ_a</td><td style="padding:8px 16px;text-align:right;color:var(--red)">31</td><td style="padding:8px 16px;text-align:right;color:var(--green)">89</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+58</td></tr>
-        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 16px;color:var(--muted)">02</td><td style="padding:8px 16px;color:var(--text)">state mutation</td><td style="padding:8px 16px;color:var(--red)">κ_a</td><td style="padding:8px 16px;text-align:right;color:var(--red)">28</td><td style="padding:8px 16px;text-align:right;color:var(--green)">92</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+64</td></tr>
-        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 16px;color:var(--muted)">03</td><td style="padding:8px 16px;color:var(--text)">N+1 fetch</td><td style="padding:8px 16px;color:var(--amber)">σ</td><td style="padding:8px 16px;text-align:right;color:var(--red)">12</td><td style="padding:8px 16px;text-align:right;color:var(--green)">94</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+82</td></tr>
-        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 16px;color:var(--muted)">04</td><td style="padding:8px 16px;color:var(--text)">dependency lie</td><td style="padding:8px 16px;color:var(--red)">κ_a</td><td style="padding:8px 16px;text-align:right;color:var(--red)">18</td><td style="padding:8px 16px;text-align:right;color:var(--green)">85</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+67</td></tr>
-        <tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 16px;color:var(--muted)">05</td><td style="padding:8px 16px;color:var(--text)">unbounded cache</td><td style="padding:8px 16px;color:var(--amber)">σ + κ_a</td><td style="padding:8px 16px;text-align:right;color:var(--red)">8</td><td style="padding:8px 16px;text-align:right;color:var(--green)">91</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+83</td></tr>
-        <tr><td style="padding:8px 16px;color:var(--muted)">06</td><td style="padding:8px 16px;color:var(--text)">three async sins</td><td style="padding:8px 16px;color:var(--amber)">σ + κ_a</td><td style="padding:8px 16px;text-align:right;color:var(--red)">22</td><td style="padding:8px 16px;text-align:right;color:var(--green)">88</td><td style="padding:8px 16px;text-align:right;color:var(--green);font-weight:500">+66</td></tr>
-      </tbody>
-    </table>
+<section class="section" id="domains"><div class="wrap">
+  <div class="kicker">transfer tests beyond code</div><h2>Same grammar. Different physical evidence.</h2>
+  <p class="lead">These are research directions, not established DST applications. The value is whether the same distinctions survive domain-specific falsification.</p>
+  <div class="grid three">
+    <div class="card domain"><div class="domain-k">AI reasoning</div><h3>Success is not explanation.</h3><div class="q">If two agents score the same, what machinery did each need to stay successful?</div><p>Track retries, tools, human rescue, context, judge intervention and future task options. A model should also refuse to infer hidden capacity when the evidence does not identify it.</p></div>
+    <div class="card domain"><div class="domain-k">Biology</div><h3>Match the outcome. Challenge again.</h3><div class="q">Two tissues look equally recovered. Are they equally capable?</div><p>Withdraw support, apply the same second perturbation, measure persistent impairment, compensatory resource use, recipient burden and recovery trajectory rather than only today's phenotype.</p></div>
+    <div class="card domain"><div class="domain-k">Cancer</div><h3>Competing future option sets.</h3><div class="q">Which therapy preserves the patient's options while shrinking the tumor's escape options?</div><p>Equal tumor shrinkage can leave radically different residual clone diversity, host reserve and future treatment space. This suggests an adversarial executability extension worth testing, not yet adding to the kernel.</p></div>
   </div>
+</div></section>
 
-<!-- DST AI TRAINING PROMPT -->
-<div class="training">
-  <div class="training-box">
-    <div class="training-header">
-      <span class="training-title">DST coding system prompt</span>
-      <span class="training-sub">paste into any AI assistant → instant DST-aware coding</span>
-    </div>
-    <div class="training-body">
-      <p>Paste this into your AI assistant's system prompt. Every response will automatically classify patterns as κ_a / κ_c / κ_i and write code that keeps dΘ/dt positive.</p>
-      <pre class="prompt" id="prompt-text"><span class="cmnt"># DST-Aware Coding Assistant</span>
-<span class="cmnt"># Declining Stress Threshold — ρ heals · κ hides · σ kills</span>
-
-<span class="rule">Before writing any code, classify the request:</span>
-<span class="ph">- Is this healing (ρ) or masking (κ)?</span>
-<span class="ph">- If κ: accumulated (fix it) / conscripted (accept it) / intentional (document it)?</span>
-
-<span class="rule">Mandatory rules — never violate:</span>
-<span class="ph">1. No silent catch blocks. Every error must throw, rethrow, or log structured + throw.</span>
-<span class="ph">2. No implicit state mutation. Return new objects. Side effects must be explicit.</span>
-<span class="ph">3. No unbounded collections. Every array/map that grows must have a max size or eviction.</span>
-<span class="ph">4. No N+1 patterns. DB/API calls inside loops are σ amplifiers — batch them.</span>
-<span class="ph">5. No TODO without a ticket reference and expiration condition.</span>
-<span class="ph">6. No `any` type without a documented reason and upstream issue link.</span>
-
-<span class="rule">For every function written, ask:</span>
-<span class="ph">- Does this make dΘ/dt positive (ρ) or negative (κ)?</span>
-<span class="ph">- Is failure visible or invisible to callers?</span>
-<span class="ph">- Does this scale safely or amplify stress with data size?</span>
-
-<span class="rule">Output format for code reviews:</span>
-<span class="ph">κ_a (fix): [pattern] — [why it declines Θ] — [specific fix]</span>
-<span class="ph">κ_c (mitigate): [pattern] — [domain constraint] — [instrumentation approach]</span>
-<span class="ph">ρ (preserve): [pattern] — [why it heals Θ]</span>
-<span class="ph">σ (resolve first): [amplifier] — [scale factor] — [batch/bound fix]</span>
-
-<span class="cmnt"># DST Framework · SSRN 6434119 · Idan Rephiah · 2026</span></pre>
-      <button class="copy-btn" onclick="copyPrompt()">copy prompt</button>
-    </div>
+<section class="section"><div class="wrap">
+  <div class="kicker">negative control</div><h2>Compensation is not automatically bad.</h2>
+  <p class="lead">A framework that calls every fallback unhealthy is useless. The right answer can be “keep the compensation.”</p>
+  <div class="grid two">
+    <div class="card pad"><h3>Legitimate buffering</h3><p>A bounded queue absorbs a temporary burst, the arrival rate returns below service capacity, the queue drains, deadlines are met, no new dependency becomes permanently load-bearing, and future options are preserved.</p><div class="quote">Classification: appropriate architecture, not evidence of hidden decline.</div></div>
+    <div class="card pad"><h3>Masking a sustained mismatch</h3><p>The same queue keeps the process alive while arrivals remain permanently above sustainable throughput. Waiting, rejection or retries move upstream and the requirement remains unmet.</p><div class="quote">Classification: continuity may be preserved, but the underlying throughput mismatch remains.</div></div>
   </div>
-</div>
+</div></section>
 
-<div class="footer">
-  <span>DST Framework · <a href="https://ssrn.com/abstract=6434119">SSRN 6434119</a> · Idan Rephiah · 2026</span>
-  <span><a href="https://idanreph.github.io/dst--theory-/">Theory</a> · <a href="https://github.com/idanreph/DST-framework">GitHub</a> · ρ heals · κ hides · σ kills</span>
-</div>
+<section class="section" id="stack"><div class="wrap">
+  <div class="kicker">what to build next</div><h2>Finish the machine before multiplying products.</h2>
+  <p class="lead">The current discoveries point toward one stack rather than five unrelated tools.</p>
+  <div class="stack">
+    <div class="stackbox"><strong>Scanner</strong><span>recover topology, signals, requirements, resources</span></div><div class="arrow">→</div>
+    <div class="stackbox"><strong>Verification</strong><span>runtime + mutation / ablation earns classifications</span></div><div class="arrow">→</div>
+    <div class="stackbox"><strong>DST Engine</strong><span>joint feasibility, resources, transfers, clocks, option sets</span></div><div class="arrow">→</div>
+    <div class="stackbox"><strong>Compass</strong><span>bottlenecks, action impact, recipient migration, future options</span></div>
+  </div>
+  <div class="rule"><strong>Engine = physics.</strong> Scanner observes. Verification tests the effect. Compass turns the structural state into a decision surface. Domain products and business models come after this stack is stable.</div>
+</div></section>
+
+<section class="section" id="prompt"><div class="wrap">
+  <div class="kicker">AI use</div><h2>Compact DST-aware review prompt.</h2>
+  <p class="lead">This prompt forces mechanism-first reasoning while preserving uncertainty and negative controls.</p>
+  <div class="card promptbox">
+    <div class="prompt-head"><strong>DST / executability engineering review</strong><button class="btn" id="copyBtn">copy prompt</button></div>
+    <pre class="prompt" id="promptText"><span class="accent">Before proposing a fix:</span>
+
+1. OBSERVABLE — What looks successful or broken right now?
+2. REQUIREMENT — What must actually be true for the system to count as functioning?
+3. AUTHORITY — Which state is authoritative? Do not promote a proxy, cache, index, metric, test or UI into truth without justification.
+4. PERSISTENT IMPAIRMENT — What would remain wrong even if the observable looked normal?
+5. EFFECT VECTOR — For each intervention, separate:
+   • reduction of incoming burden
+   • genuine reduction of existing impairment
+   • durable capacity creation
+   • real requirement reduction
+   • transfer / compensation through another route, recipient or finite resource
+6. RECIPIENT + COST — If burden moved, where did it go? If compensation is finite, name the stock, rate limit, deadline or recipient capacity.
+7. JOINT EXECUTABILITY — A proposed future is valid only if every required condition can hold together. AND inside a plan; OR between complete plans.
+8. SECOND CHALLENGE — Remove the support, increase load, repeat the perturbation, delay a dependency, or exhaust the relevant resource. What result distinguishes repair from continuity?
+9. FUTURE OPTIONS — Which complete responses remain executable after the intervention? Do not treat option count alone as option quality.
+10. UNCERTAINTY — If the evidence does not identify the hidden state or intervention class, output <span class="warntext">UNRESOLVED</span> and state what evidence would resolve it.
+
+<span class="accent">Required output:</span>
+Observable · requirement · authoritative state · persistent impairment · intervention effect · recipient/resource · executable plans · second challenge · future option change · falsifier / unresolved evidence.</pre>
+  </div>
+</div></section>
+</main>
+
+<footer class="footer"><div class="wrap frow"><span>DST Framework · research prototype · 2026</span><span>Canonical DST I · DST-II executability kernel · Scanner / Verification / Engine / Compass</span></div></footer>
 
 <script>
-function copyPrompt(){
-  const text=document.getElementById('prompt-text').innerText;
-  navigator.clipboard.writeText(text).then(()=>{
-    const btn=document.querySelector('.copy-btn');
-    btn.textContent='copied ✓';
-    btn.style.borderColor='var(--green)';
-    btn.style.color='var(--green)';
-    setTimeout(()=>{btn.textContent='copy prompt';btn.style.borderColor='';btn.style.color=''},2000);
-  });
+const $ = id => document.getElementById(id);
+const opts = ['direct','fallback','reroute','degrade','manual'];
+function optionPills(el, n){ el.innerHTML = opts.map((o,i)=>`<span class="option ${i<n?'on':'off'}">${o}</span>`).join(''); }
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function updateTwin(message){
+  const y=+$('yRange').value, p=+$('pressureRange').value, t=+$('timeRange').value;
+  $('outY').textContent=y+'%'; $('outPressure').textContent=p; $('outTime').textContent=t+' periods';
+  $('aY').textContent=$('bY').textContent=y+'%'; $('aYBar').style.width=$('bYBar').style.width=y+'%';
+  const aD=clamp(Math.round(p*.30 - t*1.5),4,40); const bD=clamp(Math.round(p + t*3),10,95);
+  const aK=clamp(98-Math.round(t*2+p*.08),55,100); const bK=clamp(100-Math.round(p*.45+t*9),0,100);
+  const aO=clamp(5-Math.floor(aD/35),3,5); const bO=clamp(5-Math.floor((bD+(100-bK))/35),0,5);
+  $('aD').textContent=aD; $('aDBar').style.width=aD+'%'; $('bD').textContent=bD; $('bDBar').style.width=bD+'%';
+  $('aK').textContent=aK; $('aKBar').style.width=aK+'%'; $('bK').textContent=bK; $('bKBar').style.width=bK+'%';
+  $('aOpts').textContent=aO+' / 5'; $('bOpts').textContent=bO+' / 5'; optionPills($('aOptionPills'),aO); optionPills($('bOptionPills'),bO);
+  $('labResult').innerHTML=message || `<strong>Snapshot:</strong> both systems still report ${y}% success. System B is spending more support and retaining fewer complete future options, but the visible output alone does not reveal that.`;
 }
+['yRange','pressureRange','timeRange'].forEach(id=>$(id).addEventListener('input',()=>updateTwin()));
+$('challengeBtn').addEventListener('click',()=>{
+  const p=+$('pressureRange').value,t=+$('timeRange').value; const a=clamp(96-Math.round(p*.08),80,98); const b=clamp(93-Math.round(p*.45+t*4),25,92);
+  $('labResult').innerHTML=`<strong>Second challenge:</strong> under the same added perturbation, System A retains ~${a}% service while System B falls toward ~${b}%. The point is not these toy numbers; the test asks whether equal present output hides unequal future capability.`;
+});
+$('removeBtn').addEventListener('click',()=>{
+  const t=+$('timeRange').value,p=+$('pressureRange').value; const b=clamp(96-Math.round(p*.55+t*5),15,90);
+  $('labResult').innerHTML=`<strong>Fallback ablation:</strong> System A should remain near its repaired state. System B falls toward ~${b}% because removing the support exposes the unresolved mechanism. If it did not, the original “compensation” diagnosis would need to be revised.`;
+});
+$('resetBtn').addEventListener('click',()=>{ $('yRange').value=99;$('pressureRange').value=55;$('timeRange').value=3;updateTwin('<strong>Reset:</strong> both systems again look equally successful. Change the hidden pressure or time under workaround.'); });
+updateTwin();
+
+function updatePlans(){
+  const r2=$('routeToggle').checked, r1=$('recipientToggle').checked, k=$('resourceToggle').checked, fb=$('fallbackToggle').checked;
+  const plans=[];
+  if(r1&&k) plans.push('P1');
+  if(r2&&k) plans.push('P2');
+  if(fb&&r1) plans.push('P3');
+  $('planRead').innerHTML=plans.length?`Executable plans: <b>${plans.join(' · ')}</b> · ${plans.length} complete future${plans.length===1?'':'s'} remain.`:`Executable plans: <span style="color:var(--red)"><b>none</b></span> · local resources may still exist, but no complete plan is jointly executable.`;
+}
+['routeToggle','recipientToggle','resourceToggle','fallbackToggle'].forEach(id=>$(id).addEventListener('change',updatePlans)); updatePlans();
+
+$('copyBtn').addEventListener('click',()=>{
+  const text=$('promptText').innerText; navigator.clipboard.writeText(text).then(()=>{ const b=$('copyBtn'); const old=b.textContent; b.textContent='copied ✓'; setTimeout(()=>b.textContent=old,1500); });
+});
 </script>
 </body>
 </html>
